@@ -1,0 +1,3725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#f7f0e7">
+<title>Shared Money</title>
+
+<style>
+:root{
+  --bg:#f7f0e7;
+  --panel:#ffffff;
+  --panel2:#fbf8f4;
+  --soft:#f1ebff;
+  --border:#e9e1d7;
+  --text:#181537;
+  --muted:#7c768a;
+  --accent:#7855e8;
+  --accent2:#a14ee8;
+  --blue:#3987e8;
+  --danger:#e96d72;
+  --warning:#e8b75e;
+  --green:#45b99a;
+  --shadow:0 12px 34px rgba(44,31,75,.08);
+  --shadow-soft:0 6px 22px rgba(44,31,75,.055);
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;width:100%;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;overflow-x:hidden}
+body{background:radial-gradient(circle at 90% 0%,rgba(161,78,232,.08),transparent 30%),var(--bg)}
+button,input,select{font:inherit}
+button{cursor:pointer}
+input,select{width:100%;background:#fff;color:var(--text);border:1px solid var(--border);border-radius:14px;padding:13px 14px;outline:none;font-size:15px;transition:.2s}
+input::placeholder{color:#aaa4b0}
+input:focus,select:focus{border-color:rgba(120,85,232,.6);box-shadow:0 0 0 4px rgba(120,85,232,.08)}
+
+#app{width:100%;max-width:720px;margin:auto;padding:20px 16px 80px;display:none}
+
+/* HEADER */
+header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px;padding:3px 4px}
+.brand{min-width:0}
+.brand h1{margin:0;font-size:30px;line-height:1;letter-spacing:-1.5px;font-weight:900}
+.brand h1::first-letter{color:var(--accent)}
+.brand p{margin:8px 0 0;color:var(--muted);font-size:12px;line-height:1.45}
+#month-label{color:var(--accent);font-size:11px;font-weight:800;background:#eee8ff;padding:8px 11px;border-radius:999px;white-space:nowrap}
+
+/* NAV */
+#nav{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;background:rgba(255,255,255,.72);border:1px solid var(--border);padding:5px;border-radius:18px;margin-bottom:16px;position:sticky;top:8px;z-index:20;box-shadow:0 5px 18px rgba(44,31,75,.05);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+#nav button{border:0;min-height:44px;border-radius:13px;background:transparent;color:var(--muted);font-size:11px;font-weight:800;transition:.22s;padding:8px 6px}
+#nav button.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 7px 18px rgba(120,85,232,.22);transform:translateY(-1px)}
+
+.page{display:none;animation:pageIn .28s ease}
+.page.active{display:block}
+@keyframes pageIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+
+/* PANELS */
+.panel{background:rgba(255,255,255,.92);border:1px solid rgba(233,225,215,.9);border-radius:24px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel:first-child{background:linear-gradient(135deg,#fffdf9,#f5f0ff)}
+
+/* SUMMARY */
+#summary{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.stat{background:rgba(255,255,255,.8);border:1px solid rgba(233,225,215,.75);border-radius:17px;padding:14px;min-width:0;box-shadow:0 4px 14px rgba(44,31,75,.035)}
+.stat-label{color:#9b96a4;font-size:9px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:7px;font-weight:800}
+.stat-value{font-size:20px;font-weight:900;letter-spacing:-.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.positive{color:var(--green)}
+.negative{color:var(--danger)}
+
+/* BUDGET */
+#budget-row{display:flex;align-items:center;gap:10px;margin-top:16px;color:var(--muted);font-size:11px;font-weight:700}
+#budget-input{width:170px;background:#fff}
+#progress-track{width:100%;height:8px;background:#eee9f2;border-radius:999px;overflow:hidden;margin-top:12px}
+#progress-fill{width:0;height:100%;background:linear-gradient(90deg,var(--accent),var(--blue));border-radius:999px;transition:.35s ease}
+
+/* TITLES */
+.section-title{color:#9a94a2;font-size:10px;text-transform:uppercase;letter-spacing:.11em;margin:0 0 14px;font-weight:900}
+.section-title-lg{color:var(--text);font-size:18px;letter-spacing:-.3px;margin:0 0 4px;font-weight:900;text-transform:none}
+
+/* WHERE IT WENT / DONUT */
+.where-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px}
+.where-head .hint{color:var(--muted);font-size:12px;margin:0}
+.donut-wrap{display:flex;justify-content:center;align-items:center;margin:8px 0 20px;position:relative}
+.donut-svg{width:180px;height:180px}
+.donut-center{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  pointer-events:none
+}
+.donut-center .amt{font-size:22px;font-weight:900;letter-spacing:-.6px;color:var(--text)}
+.donut-center .lbl{font-size:11px;color:var(--muted);font-weight:700;margin-top:2px}
+
+/* CATEGORIES — modern rows */
+#categories{display:flex;flex-direction:column;gap:14px}
+.cat-modern{
+  display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;
+  padding:4px 0
+}
+.cat-modern .cat-top{display:flex;justify-content:space-between;align-items:baseline;grid-column:1 / -1}
+.cat-modern .cat-name{color:var(--text);font-size:14px;font-weight:800}
+.cat-modern .cat-amount{font-size:14px;font-weight:900;letter-spacing:-.3px}
+.cat-modern .cat-sub{grid-column:1 / -1;color:var(--muted);font-size:11px;font-weight:600;margin-top:-2px}
+.cat-modern .cat-bar-track{grid-column:1 / -1;height:6px;background:#eef1f4;border-radius:99px;overflow:hidden;margin-top:6px}
+.cat-modern .cat-bar-fill{height:100%;border-radius:99px;transition:width .35s ease}
+
+/* DAY BY DAY */
+.day-chart-wrap{margin-top:8px}
+.day-chart{
+  display:flex;align-items:flex-end;gap:6px;height:120px;
+  padding:8px 2px 0;overflow-x:auto;-webkit-overflow-scrolling:touch
+}
+.day-col{flex:1;min-width:18px;max-width:36px;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.day-bar-track{width:100%;flex:1;display:flex;align-items:flex-end;justify-content:center}
+.day-bar{
+  width:70%;max-width:22px;border-radius:8px 8px 4px 4px;min-height:4px;
+  background:linear-gradient(180deg,#7ee0c3,#45b99a);transition:height .3s ease
+}
+.day-bar.empty{background:#e8eef0;min-height:4px}
+.day-label{font-size:9px;color:var(--muted);font-weight:700;white-space:nowrap}
+.day-avg-row{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--border)}
+.day-avg-row .avg-label{color:var(--muted);font-size:12px;font-weight:700}
+.day-avg-row .avg-value{font-size:13px;font-weight:900}
+
+/* TRACKER ACTIONS */
+.tracker-actions{display:flex;gap:10px;margin-top:4px}
+.tracker-actions .ghost-btn,.tracker-actions .add-exp-btn{
+  flex:1;min-height:48px;border-radius:16px;font-weight:800;font-size:14px;border:0
+}
+.ghost-btn{background:#e8f7f1;color:#1a7a5c}
+.add-exp-btn{background:linear-gradient(135deg,#3dcfb0,#2bb896);color:#fff;box-shadow:0 8px 20px rgba(45,185,150,.25)}
+.add-exp-btn:active,.ghost-btn:active{transform:scale(.98)}
+
+/* ADD FORM */
+#add-form{display:grid;grid-template-columns:1fr 110px 120px 140px auto;gap:8px}
+#add-form input[type="date"],
+.txn-form input[type="date"]{
+  min-width:0;
+  font-size:13px;
+  padding:11px 10px;
+  color:var(--text);
+}
+.date-hint{color:var(--muted);font-size:10px;font-weight:700;margin:0 0 6px 2px}
+.primary{border:0;background:linear-gradient(135deg,var(--accent),var(--blue));color:#fff;border-radius:14px;min-height:47px;padding:10px 18px;font-weight:900;box-shadow:0 9px 20px rgba(120,85,232,.2);transition:.2s}
+.primary:active{transform:scale(.98)}
+
+/* SEARCH */
+.list-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+#expense-search{width:240px}
+
+/* EXPENSE LIST */
+#expense-list{display:flex;flex-direction:column}
+.expense-item{display:grid;grid-template-columns:9px 1fr 92px 100px 34px;gap:10px;align-items:center;padding:13px 2px;border-bottom:1px solid #eee7df;transition:.18s}
+.expense-item:last-child{border-bottom:0}
+.expense-item:hover{background:#fcf9ff;border-radius:13px}
+.dot{width:8px;height:8px;border-radius:50%;box-shadow:0 0 0 4px rgba(120,85,232,.07)}
+.expense-name{font-size:13px;font-weight:850;word-break:break-word}
+.expense-date{color:var(--muted);font-size:9px;margin-top:4px}
+.expense-cat{color:var(--muted);font-size:11px}
+.expense-amount{text-align:right;font-size:12px;font-weight:900;white-space:nowrap}
+.delete-btn{width:32px;height:32px;border:0;border-radius:11px;background:#f8f4f6;color:#a49dab;font-size:19px;transition:.18s}
+.delete-btn:hover{background:#fff0f2;color:var(--danger)}
+#empty{display:none;text-align:center;color:var(--muted);padding:30px 10px;font-size:12px}
+
+/* PASSBOOK */
+#passbook-sub{color:var(--muted);font-size:11px;margin-top:-6px;margin-bottom:16px}
+#passbook-filter{
+  display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;
+  background:linear-gradient(135deg,#faf7ff,#f5fbff);
+  border:1px solid #ece5f6;border-radius:18px;padding:14px;margin-bottom:15px
+}
+#passbook-filter .filter-group{display:flex;flex-direction:column;gap:5px;min-width:120px}
+#passbook-filter label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#99939f}
+#passbook-filter input[type="date"],
+#passbook-filter select{
+  background:#fff;border:1px solid var(--border);border-radius:12px;
+  padding:10px 12px;font-size:13px;font-weight:700;min-height:44px;color:var(--text)
+}
+#passbook-filter .filter-actions{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+#passbook-filter .filter-btn{
+  border:1px solid var(--border);background:#fff;color:var(--text);
+  border-radius:12px;padding:10px 14px;min-height:44px;font-weight:800;font-size:12px;cursor:pointer
+}
+#passbook-filter .filter-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+#passbook-filter .filter-btn.primary-filter{background:#eee8ff;color:var(--accent);border-color:#d9d0ff}
+#period-label{font-size:11px;font-weight:800;color:var(--accent);margin-top:2px}
+#opening-card{display:flex;justify-content:space-between;align-items:center;gap:15px;background:linear-gradient(135deg,#faf7ff,#f5fbff);border:1px solid #ece5f6;border-radius:18px;padding:16px;margin-bottom:15px}
+#opening-input{width:180px;background:#fff;border-color:#ebe4f2;font-size:22px;font-weight:900;text-align:right}
+#txn-forms{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px}
+.txn-form{background:#fbf9f6;border:1px solid var(--border);border-radius:18px;padding:14px}
+.txn-label{color:#99939f;text-transform:uppercase;font-size:9px;letter-spacing:.09em;margin-bottom:10px;font-weight:900}
+.txn-form form{display:grid;grid-template-columns:1fr 100px 130px auto;gap:7px}
+.txn-btn{border:0;border-radius:12px;padding:10px;min-height:44px;font-weight:900}
+.credit-btn{background:#e4f6f0;color:#25866f}
+.debit-btn{background:#fff0f2;color:#c94f60}
+#passbook-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:15px}
+.pb-stat{background:#fff;border:1px solid var(--border);border-radius:16px;padding:14px;box-shadow:0 4px 14px rgba(44,31,75,.035)}
+.credit-color{color:var(--green)}
+.debit-color{color:var(--danger)}
+
+/* TABLE */
+#passbook-table-wrap{width:100%;overflow-x:auto;border:1px solid var(--border);border-radius:17px;-webkit-overflow-scrolling:touch}
+table{width:100%;min-width:650px;border-collapse:collapse;background:#fff}
+th{background:#faf7f3;color:#9b96a4;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.08em;padding:12px;white-space:nowrap}
+td{padding:12px;border-top:1px solid #eee8e1;font-size:11px;white-space:nowrap}
+.num{text-align:right}.balance{font-weight:900}.opening-row{color:var(--muted);font-style:italic}
+
+/* DATA TOOLS */
+.data-tools{display:flex;flex-direction:column;gap:12px}
+.data-tools-row{display:flex;gap:10px;flex-wrap:wrap}
+.data-btn{
+  flex:1;
+  min-width:120px;
+  border:1px solid var(--border);
+  background:#fff;
+  color:var(--text);
+  border-radius:13px;
+  min-height:44px;
+  padding:10px 14px;
+  font-weight:800;
+  font-size:12px;
+  transition:.2s;
+}
+.data-btn:active{transform:scale(.98)}
+.data-btn.export{border-color:rgba(69,185,154,.35);background:#f0faf7;color:#2a9d7a}
+.data-btn.import{border-color:rgba(57,135,232,.35);background:#f0f6ff;color:#2f6fc0}
+.data-tools-hint{color:var(--muted);font-size:11px;margin:0;line-height:1.45}
+#import-file{display:none}
+
+/* EXPORT REPORTS UI */
+.export-hero{margin-bottom:4px}
+.export-hero h2{margin:0;font-size:20px;font-weight:900;letter-spacing:-.4px}
+.export-hero p{margin:6px 0 0;color:var(--muted);font-size:12px;line-height:1.45}
+.period-chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
+.period-chip{
+  border:1px solid var(--border);background:#fff;color:var(--muted);
+  border-radius:999px;padding:9px 14px;font-size:12px;font-weight:800;min-height:40px
+}
+.period-chip.active{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:transparent;
+  box-shadow:0 6px 16px rgba(120,85,232,.25)
+}
+.include-list{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+.include-row{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  background:#fbf9f6;border:1px solid var(--border);border-radius:16px;padding:12px 14px
+}
+.include-row .left{display:flex;align-items:center;gap:10px}
+.include-dot{width:10px;height:10px;border-radius:50%}
+.include-dot.exp{background:#45b99a}
+.include-dot.inc{background:#3987e8}
+.include-dot.deb{background:#e96d72}
+.include-label{font-size:13px;font-weight:800}
+.include-sub{font-size:10px;color:var(--muted);font-weight:600}
+.toggle{
+  position:relative;width:48px;height:28px;border-radius:999px;border:0;
+  background:#d9d4de;cursor:pointer;transition:.2s;flex-shrink:0
+}
+.toggle.on{background:linear-gradient(135deg,#5b8def,#7855e8)}
+.toggle::after{
+  content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;
+  border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.15);transition:.2s
+}
+.toggle.on::after{left:23px}
+.format-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 16px}
+.format-card{
+  border:1.5px solid var(--border);background:#fff;border-radius:18px;padding:14px 12px;
+  text-align:left;cursor:pointer;transition:.2s;min-height:88px
+}
+.format-card:hover{border-color:rgba(120,85,232,.4)}
+.format-card.active{
+  border-color:var(--accent);background:linear-gradient(135deg,#faf7ff,#f5f0ff);
+  box-shadow:0 0 0 3px rgba(120,85,232,.12)
+}
+.format-icon{font-size:22px;margin-bottom:6px}
+.format-name{font-size:14px;font-weight:900;letter-spacing:-.2px}
+.format-desc{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.35;font-weight:600}
+.export-main-btn{
+  width:100%;min-height:50px;border:0;border-radius:16px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;
+  font-weight:900;font-size:15px;box-shadow:0 8px 22px rgba(120,85,232,.28)
+}
+.export-main-btn:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+.import-mini{margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.import-mini .data-tools-row{margin-top:8px}
+
+/* DANGER */
+.danger-zone{display:flex;justify-content:space-between;align-items:center;gap:15px}
+.danger-zone p{color:var(--muted);font-size:11px;margin:5px 0 0}
+.danger-btn{border:1px solid rgba(233,109,114,.3);color:#c95260;background:#fff2f3;border-radius:13px;min-height:42px;padding:9px 14px;font-weight:800}
+
+/* TOAST */
+#toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);opacity:0;background:#181537;border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:11px 18px;color:#fff;font-size:11px;font-weight:700;pointer-events:none;transition:.25s;z-index:100;max-width:90%;text-align:center;box-shadow:0 12px 30px rgba(24,21,55,.22)}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+
+/* ======================================================
+   ADMIN LOGIN
+====================================================== */
+#login-screen{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px 16px;
+  background:
+    radial-gradient(circle at 10% 5%,rgba(120,85,232,.13),transparent 28%),
+    radial-gradient(circle at 95% 95%,rgba(57,135,232,.10),transparent 28%),
+    var(--bg);
+}
+.login-card{
+  width:100%;
+  max-width:420px;
+  background:rgba(255,255,255,.94);
+  border:1px solid rgba(233,225,215,.95);
+  border-radius:30px;
+  padding:28px;
+  box-shadow:0 24px 60px rgba(44,31,75,.13);
+  animation:loginIn .45s ease;
+}
+@keyframes loginIn{
+  from{opacity:0;transform:translateY(18px) scale(.98)}
+  to{opacity:1;transform:none}
+}
+.login-brand{
+  text-align:center;
+  margin-bottom:24px;
+}
+.login-logo{
+  width:64px;
+  height:64px;
+  margin:0 auto 14px;
+  border-radius:21px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-size:29px;
+  font-weight:900;
+  background:linear-gradient(135deg,var(--accent),var(--blue));
+  box-shadow:0 12px 25px rgba(120,85,232,.25);
+}
+.login-brand h1{
+  margin:0;
+  font-size:28px;
+  letter-spacing:-1px;
+  font-weight:900;
+}
+.login-brand h1 span{color:var(--accent)}
+.login-brand p{
+  margin:8px 0 0;
+  color:var(--muted);
+  font-size:12px;
+}
+.login-eyebrow{
+  color:var(--accent);
+  text-align:center;
+  font-size:10px;
+  font-style:italic;
+  font-weight:900;
+  margin-bottom:6px;
+}
+.login-field{margin-bottom:14px}
+.login-label{
+  display:block;
+  color:#9a94a2;
+  font-size:9px;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  font-weight:900;
+  margin:0 0 7px 3px;
+}
+.login-input-wrap{position:relative}
+.login-input-wrap input{padding-left:43px;min-height:49px}
+.login-input-icon{
+  position:absolute;
+  left:14px;
+  top:50%;
+  transform:translateY(-50%);
+  color:var(--accent);
+  font-size:16px;
+  pointer-events:none;
+}
+#login-button{
+  width:100%;
+  min-height:50px;
+  border:0;
+  border-radius:16px;
+  color:#fff;
+  font-weight:900;
+  font-size:14px;
+  background:linear-gradient(135deg,var(--accent),var(--blue));
+  box-shadow:0 11px 24px rgba(120,85,232,.22);
+  transition:.2s;
+  margin-top:4px;
+}
+#login-button:active{transform:scale(.985)}
+#login-error{
+  min-height:18px;
+  color:var(--danger);
+  text-align:center;
+  font-size:11px;
+  font-weight:800;
+  margin:10px 0 0;
+}
+.login-footer{
+  margin-top:18px;
+  text-align:center;
+  color:#aaa4b0;
+  font-size:9px;
+}
+.app-footer{
+  margin-top:28px;
+  padding:16px 8px 8px;
+  text-align:center;
+  color:var(--muted);
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:0.2px;
+  border-top:1px solid var(--border);
+}
+.app-footer span{
+  color:var(--accent);
+  font-weight:800;
+}
+
+/* MOBILE */
+@media(max-width:768px){
+  #app{padding:14px 10px 84px}
+  header{align-items:flex-start;margin-bottom:14px}
+  .brand h1{font-size:27px}
+  .brand p{font-size:11px}
+  #month-label{font-size:9px;padding:7px 9px}
+  #nav{margin-bottom:12px}
+  .panel{padding:14px;border-radius:21px;margin-bottom:11px}
+  #summary{grid-template-columns:1fr 1fr;gap:7px}
+  .stat{padding:12px;border-radius:15px}
+  .stat-value{font-size:18px}
+  #summary .stat:last-child{grid-column:1/-1}
+  #budget-row{flex-direction:column;align-items:stretch}
+  #budget-input{width:100%;min-height:46px}
+  .cat-row{grid-template-columns:64px 1fr 72px;gap:7px}
+  .cat-name,.cat-amount{font-size:10px}
+  #add-form{display:flex;flex-direction:column}
+  #add-form input,#add-form select,#add-form button{width:100%;min-height:46px}
+  .list-toolbar{flex-direction:column;align-items:stretch}
+  #expense-search{width:100%;min-height:45px}
+  .expense-item{grid-template-columns:8px 1fr auto 32px;gap:7px;padding:12px 1px}
+  .expense-cat{grid-column:2;font-size:9px;margin-top:2px}
+  .expense-amount{font-size:11px}
+  #opening-card{flex-direction:column;align-items:stretch}
+  #opening-input{width:100%;text-align:left;min-height:48px}
+  #txn-forms{grid-template-columns:1fr}
+  .txn-form form{display:flex;flex-direction:column}
+  .txn-form input,.txn-form button{width:100%;min-height:45px}
+  #passbook-summary{grid-template-columns:1fr}
+  #statement-summary{grid-template-columns:1fr 1fr !important}
+  #passbook-filter{flex-direction:column;align-items:stretch}
+  #passbook-filter .filter-group{min-width:0;width:100%}
+  #passbook-filter input[type="date"],
+  #passbook-filter select{width:100%}
+  #passbook-filter .filter-actions{width:100%}
+  #passbook-filter .filter-btn{flex:1}
+  #nav button{font-size:10px;padding:8px 4px}
+  .danger-zone{flex-direction:column;align-items:stretch}
+  .danger-btn{width:100%}
+  .data-tools-row{flex-direction:column}
+  .data-btn{width:100%}
+}
+
+@media(max-width:400px){
+  #app{padding-left:8px;padding-right:8px}
+  .brand h1{font-size:24px}
+  #nav button{font-size:11px}
+  .stat-value{font-size:16px}
+  .cat-row{grid-template-columns:56px 1fr 62px}
+  .expense-name{font-size:12px}
+}
+</style>
+</head>
+
+<body>
+
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="login-logo">♡</div>
+      <div class="login-eyebrow">admin access</div>
+      <h1>shared<span>.</span></h1>
+      <p>Sign in to manage your shared money.</p>
+    </div>
+
+    <form id="login-form" autocomplete="off">
+      <div class="login-field">
+        <label class="login-label" for="login-username">Username</label>
+        <div class="login-input-wrap">
+          <span class="login-input-icon">◉</span>
+          <input id="login-username" type="text" autocomplete="username" placeholder="Enter username" required>
+        </div>
+      </div>
+
+      <div class="login-field">
+        <label class="login-label" for="login-password">Password</label>
+        <div class="login-input-wrap">
+          <span class="login-input-icon">●</span>
+          <input id="login-password" type="password" autocomplete="current-password" placeholder="Enter password" required>
+        </div>
+      </div>
+
+      <button id="login-button" type="submit">Login as Admin</button>
+      <div id="login-error"></div>
+    </form>
+
+    <div class="login-footer">Private admin area · Shared Money<br>Designed by Bhim Mondal</div>
+  </div>
+</div>
+
+<div id="app">
+
+<header>
+  <div class="brand">
+    <h1>shared<span style="color:var(--accent)">.</span></h1>
+    <p>Every expense, in one place. Track your month beautifully.</p>
+  </div>
+
+  <div id="month-label"></div>
+</header>
+
+<nav id="nav">
+  <button id="nav-tracker" class="active">
+    Cost Tracker
+  </button>
+
+  <button id="nav-statement">
+    Passbook
+  </button>
+
+  <button id="nav-passbook">
+    Entry
+  </button>
+</nav>
+
+
+<!-- ======================================================
+     COST TRACKER
+====================================================== -->
+
+<section id="page-tracker" class="page active">
+
+  <div class="panel">
+
+    <div id="summary">
+
+      <div class="stat">
+        <div class="stat-label">Budget</div>
+        <div class="stat-value" id="stat-budget">
+          ₹0.00
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-label">Spent</div>
+        <div class="stat-value" id="stat-spent">
+          ₹0.00
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-label">Remaining</div>
+        <div class="stat-value positive" id="stat-remaining">
+          ₹0.00
+        </div>
+      </div>
+
+    </div>
+
+    <div id="budget-row">
+
+      <span id="budget-month-label">Monthly Budget</span>
+
+      <input
+        id="budget-input"
+        type="number"
+        min="0"
+        step="1"
+        placeholder="20000"
+      >
+
+    </div>
+
+    <div id="progress-track">
+      <div id="progress-fill"></div>
+    </div>
+
+  </div>
+
+
+  <!-- WHERE IT WENT -->
+  <div class="panel">
+
+    <div class="where-head">
+      <div>
+        <h2 class="section-title-lg">Where it went</h2>
+        <p class="hint">Spending by category</p>
+      </div>
+    </div>
+
+    <div class="donut-wrap">
+      <svg class="donut-svg" id="donut-chart" viewBox="0 0 120 120" aria-hidden="true"></svg>
+      <div class="donut-center">
+        <div class="amt" id="donut-total">₹0</div>
+        <div class="lbl">Total spent</div>
+      </div>
+    </div>
+
+    <div id="categories"></div>
+
+  </div>
+
+
+  <!-- DAY BY DAY -->
+  <div class="panel">
+
+    <div class="where-head">
+      <div>
+        <h2 class="section-title-lg">Day by day</h2>
+        <p class="hint">This month's daily spend</p>
+      </div>
+    </div>
+
+    <div class="day-chart-wrap">
+      <div class="day-chart" id="day-chart"></div>
+      <div class="day-avg-row">
+        <span class="avg-label">Average</span>
+        <span class="avg-value" id="day-avg">₹0 / day</span>
+      </div>
+    </div>
+
+  </div>
+
+
+  <div class="panel">
+
+    <div class="tracker-actions">
+      <button type="button" class="ghost-btn" id="btn-calendar">📅 Calendar</button>
+      <button type="button" class="add-exp-btn" id="btn-scroll-add">+ Add expense</button>
+    </div>
+
+  </div>
+
+
+  <div class="panel" id="add-expense-panel">
+
+    <h2 class="section-title">Add Expense</h2>
+
+    <form id="add-form">
+
+      <input
+        id="input-name"
+        type="text"
+        placeholder="What did you spend on?"
+        autocomplete="off"
+        required
+      >
+
+      <input
+        id="input-amount"
+        type="number"
+        placeholder="Amount"
+        min="0"
+        step="0.01"
+        required
+      >
+
+      <select id="input-category">
+
+        <option value="Food">Food</option>
+        <option value="Transport">Transport</option>
+        <option value="Bills">Bills</option>
+        <option value="Business">Business</option>
+        <option value="Fun">Fun</option>
+        <option value="Other">Other</option>
+
+      </select>
+
+      <input
+        id="input-date"
+        type="date"
+        title="Entry date (back-date allowed)"
+        required
+      >
+
+      <button class="primary" type="submit">
+        + Add Expense
+      </button>
+
+    </form>
+
+  </div>
+
+
+  <div class="panel">
+
+    <div class="list-toolbar">
+
+      <h2 class="section-title">
+        This Month's Expenses
+      </h2>
+
+      <input
+        id="expense-search"
+        type="search"
+        placeholder="Search expenses..."
+      >
+
+    </div>
+
+    <div id="expense-list"></div>
+
+    <div id="empty">
+      Is month ki koi expense nahi.<br>
+      Upar se pehli expense add karo.
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ======================================================
+     TRANSACTION (credits / debits ledger)
+====================================================== -->
+
+<section id="page-passbook" class="page">
+
+  <div class="panel">
+
+    <h2 class="section-title">
+      Entry
+    </h2>
+
+    <div id="passbook-sub">
+      Opening balance set karo, credit aur debit entries add karo.
+    </div>
+
+
+    <div id="opening-card">
+
+      <div>
+        <div class="stat-label">
+          Opening Balance
+        </div>
+
+        <div style="color:var(--muted);font-size:12px;">
+          Starting amount
+        </div>
+      </div>
+
+      <input
+        id="opening-input"
+        type="number"
+        step="0.01"
+        placeholder="5000"
+      >
+
+    </div>
+
+
+    <div id="txn-forms">
+
+      <div class="txn-form">
+
+        <div class="txn-label">
+          Add Credit / Income
+        </div>
+
+        <form id="credit-form">
+
+          <input
+            id="credit-name"
+            type="text"
+            placeholder="Salary / Income"
+            required
+          >
+
+          <input
+            id="credit-amount"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="Amount"
+            required
+          >
+
+          <input
+            id="credit-date"
+            type="date"
+            title="Entry date (back-date allowed)"
+            required
+          >
+
+          <button
+            type="submit"
+            class="txn-btn credit-btn"
+          >
+            Add Credit
+          </button>
+
+        </form>
+
+      </div>
+
+
+      <div class="txn-form">
+
+        <div class="txn-label">
+          Add Debit / Withdrawal
+        </div>
+
+        <form id="debit-form">
+
+          <input
+            id="debit-name"
+            type="text"
+            placeholder="Rent / Withdrawal"
+            required
+          >
+
+          <input
+            id="debit-amount"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="Amount"
+            required
+          >
+
+          <input
+            id="debit-date"
+            type="date"
+            title="Entry date (back-date allowed)"
+            required
+          >
+
+          <button
+            type="submit"
+            class="txn-btn debit-btn"
+          >
+            Add Debit
+          </button>
+
+        </form>
+
+      </div>
+
+    </div>
+
+
+    <div id="passbook-summary">
+
+      <div class="pb-stat">
+
+        <div class="stat-label">
+          Total Credit
+        </div>
+
+        <div
+          class="stat-value credit-color"
+          id="pb-total-credit"
+        >
+          ₹0.00
+        </div>
+
+      </div>
+
+
+      <div class="pb-stat">
+
+        <div class="stat-label">
+          Total Debit
+        </div>
+
+        <div
+          class="stat-value debit-color"
+          id="pb-total-debit"
+        >
+          ₹0.00
+        </div>
+
+      </div>
+
+
+      <div class="pb-stat">
+
+        <div class="stat-label">
+          Current Balance
+        </div>
+
+        <div
+          class="stat-value"
+          id="pb-balance"
+        >
+          ₹0.00
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div id="passbook-table-wrap">
+
+      <table>
+
+        <thead>
+
+          <tr>
+
+            <th>Date</th>
+
+            <th>Description</th>
+
+            <th class="num">
+              Debit
+            </th>
+
+            <th class="num">
+              Credit
+            </th>
+
+            <th class="num">
+              Balance
+            </th>
+
+            <th></th>
+
+          </tr>
+
+        </thead>
+
+        <tbody id="passbook-body"></tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+
+  <div class="panel">
+
+    <div class="export-hero">
+      <h2>Export Reports</h2>
+      <p>Your data. Exported your way — PDF, CSV, JSON, TXT &amp; Markdown.</p>
+    </div>
+
+    <div class="period-chips" id="export-period-chips">
+      <button type="button" class="period-chip active" data-period="month">This Month</button>
+      <button type="button" class="period-chip" data-period="3months">Last 3 Months</button>
+      <button type="button" class="period-chip" data-period="year">This Year</button>
+      <button type="button" class="period-chip" data-period="all">All Time</button>
+    </div>
+
+    <div style="margin-top:12px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#9a94a2;">Include</div>
+    <div class="include-list">
+      <div class="include-row">
+        <div class="left">
+          <span class="include-dot exp"></span>
+          <div>
+            <div class="include-label">Expenses</div>
+            <div class="include-sub" id="exp-count-label">Cost tracker entries</div>
+          </div>
+        </div>
+        <button type="button" class="toggle on" id="toggle-expenses" aria-pressed="true"></button>
+      </div>
+      <div class="include-row">
+        <div class="left">
+          <span class="include-dot inc"></span>
+          <div>
+            <div class="include-label">Income</div>
+            <div class="include-sub" id="inc-count-label">Credits / income</div>
+          </div>
+        </div>
+        <button type="button" class="toggle on" id="toggle-income" aria-pressed="true"></button>
+      </div>
+      <div class="include-row">
+        <div class="left">
+          <span class="include-dot deb"></span>
+          <div>
+            <div class="include-label">Debits</div>
+            <div class="include-sub" id="deb-count-label">Manual withdrawals</div>
+          </div>
+        </div>
+        <button type="button" class="toggle on" id="toggle-debits" aria-pressed="true"></button>
+      </div>
+    </div>
+
+    <div style="margin-top:4px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#9a94a2;">Format</div>
+    <div class="format-grid" id="format-grid">
+      <button type="button" class="format-card active" data-format="csv">
+        <div class="format-icon">📊</div>
+        <div class="format-name">CSV</div>
+        <div class="format-desc">Opens in Excel, Numbers, or Google Sheets</div>
+      </button>
+      <button type="button" class="format-card" data-format="json">
+        <div class="format-icon">{ }</div>
+        <div class="format-name">JSON</div>
+        <div class="format-desc">Full backup for restore &amp; analysis</div>
+      </button>
+      <button type="button" class="format-card" data-format="pdf">
+        <div class="format-icon">📄</div>
+        <div class="format-name">PDF</div>
+        <div class="format-desc">Print-ready report</div>
+      </button>
+      <button type="button" class="format-card" data-format="txt">
+        <div class="format-icon">📝</div>
+        <div class="format-name">TXT</div>
+        <div class="format-desc">Plain text, easy to share</div>
+      </button>
+      <button type="button" class="format-card" data-format="md">
+        <div class="format-icon">MD</div>
+        <div class="format-name">Markdown</div>
+        <div class="format-desc">For Notion, Obsidian, docs</div>
+      </button>
+    </div>
+
+    <button type="button" class="export-main-btn" id="export-main-btn">⬆ Export</button>
+
+    <div class="import-mini">
+      <strong style="font-size:13px;">Import / Restore</strong>
+      <p class="data-tools-hint">CSV or JSON backup se data wapas lao.</p>
+      <div class="data-tools-row">
+        <button type="button" class="data-btn import" id="import-excel">⬆ Import Excel / CSV</button>
+        <button type="button" class="data-btn import" id="import-data">⬆ Import JSON</button>
+      </div>
+      <input type="file" id="import-file" accept=".json,.csv,application/json,text/csv,text/plain,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+    </div>
+
+    <!-- hidden legacy ids kept for compatibility if any -->
+    <button type="button" id="export-excel" style="display:none"></button>
+    <button type="button" id="export-data" style="display:none"></button>
+
+  </div>
+
+  <div class="panel">
+
+    <div class="danger-zone">
+
+      <div>
+
+        <strong>
+          Reset All Data
+        </strong>
+
+        <p>
+          Delete all expenses and passbook entries.
+        </p>
+
+      </div>
+
+      <button
+        class="danger-btn"
+        id="clear-data"
+      >
+        Clear Data
+      </button>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ======================================================
+     PASSBOOK (period statement / extract)
+====================================================== -->
+
+<section id="page-statement" class="page">
+
+  <div class="panel">
+
+    <h2 class="section-title">
+      Passbook
+    </h2>
+
+    <div id="statement-sub" style="color:var(--muted);font-size:11px;margin-top:-6px;margin-bottom:16px;">
+      Saari transactions dekho, ya month / period select karke passbook nikalo.
+    </div>
+
+    <div id="passbook-filter">
+      <div class="filter-group">
+        <label for="pb-month">Month</label>
+        <select id="pb-month">
+          <option value="">All months</option>
+          <option value="0">January</option>
+          <option value="1">February</option>
+          <option value="2">March</option>
+          <option value="3">April</option>
+          <option value="4">May</option>
+          <option value="5">June</option>
+          <option value="6">July</option>
+          <option value="7">August</option>
+          <option value="8">September</option>
+          <option value="9">October</option>
+          <option value="10">November</option>
+          <option value="11">December</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="pb-year">Year</label>
+        <select id="pb-year"></select>
+      </div>
+      <div class="filter-group">
+        <label for="pb-from">From</label>
+        <input id="pb-from" type="date">
+      </div>
+      <div class="filter-group">
+        <label for="pb-to">To</label>
+        <input id="pb-to" type="date">
+      </div>
+      <div class="filter-actions">
+        <button type="button" class="filter-btn primary-filter" id="pb-apply">Apply</button>
+        <button type="button" class="filter-btn" id="pb-this-month">This Month</button>
+        <button type="button" class="filter-btn" id="pb-clear">All Time</button>
+      </div>
+      <div style="width:100%">
+        <div id="period-label">Showing: All time</div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;margin:-4px 0 14px;">
+      <button
+        id="save-passbook-pdf"
+        class="primary"
+        type="button"
+        style="min-height:42px;padding:9px 14px;"
+      >
+        📄 Save Passbook PDF
+      </button>
+    </div>
+
+    <div id="statement-summary" style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:15px;">
+      <div class="pb-stat">
+        <div class="stat-label">Opening</div>
+        <div class="stat-value" id="st-opening" style="color:var(--accent)">₹0.00</div>
+      </div>
+      <div class="pb-stat">
+        <div class="stat-label">Total Credit</div>
+        <div class="stat-value credit-color" id="st-total-credit">₹0.00</div>
+      </div>
+      <div class="pb-stat">
+        <div class="stat-label">Total Debit</div>
+        <div class="stat-value debit-color" id="st-total-debit">₹0.00</div>
+      </div>
+      <div class="pb-stat">
+        <div class="stat-label">Closing</div>
+        <div class="stat-value" id="st-balance">₹0.00</div>
+      </div>
+    </div>
+
+    <div id="statement-table-wrap" style="width:100%;overflow-x:auto;border:1px solid var(--border);border-radius:17px;-webkit-overflow-scrolling:touch;">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Description</th>
+            <th class="num">Debit</th>
+            <th class="num">Credit</th>
+            <th class="num">Balance</th>
+          </tr>
+        </thead>
+        <tbody id="statement-body"></tbody>
+      </table>
+    </div>
+
+  </div>
+
+</section>
+
+  <footer class="app-footer">
+    Designed by <span>Bhim Mondal</span>
+  </footer>
+
+</div>
+
+
+<div id="toast"></div>
+
+
+<script>
+"use strict";
+
+/* ======================================================
+   STORAGE
+====================================================== */
+
+const STORAGE_KEY =
+  "monthly_cost_tracker_mobile_v1";
+
+const DEFAULT_DATA = {
+  budget:20000,
+  monthlyBudgets:{},
+  openingBalance:5000,
+  expenses:[],
+  incomes:[],
+  manualDebits:[]
+};
+
+let data = loadData();
+
+/** "YYYY-MM" for a Date or timestamp */
+function monthKeyFrom(tsOrDate){
+  const d = tsOrDate instanceof Date ? tsOrDate : new Date(tsOrDate || Date.now());
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  return y + "-" + m;
+}
+
+function currentMonthKey(){
+  return monthKeyFrom(Date.now());
+}
+
+function isInCurrentMonth(ts){
+  return monthKeyFrom(ts) === currentMonthKey();
+}
+
+/** Expenses for the current calendar month only */
+function getCurrentMonthExpenses(){
+  return (data.expenses || []).filter(function(item){
+    return isInCurrentMonth(item.createdAt);
+  });
+}
+
+/**
+ * Per-month budget. Falls back to legacy data.budget once for current month.
+ */
+function getBudgetForMonth(key){
+  if(!data.monthlyBudgets || typeof data.monthlyBudgets !== "object"){
+    data.monthlyBudgets = {};
+  }
+  if(data.monthlyBudgets[key] != null && isFinite(Number(data.monthlyBudgets[key]))){
+    return Number(data.monthlyBudgets[key]);
+  }
+  // Legacy single budget → seed current month only
+  if(key === currentMonthKey() && data.budget != null){
+    return Number(data.budget) || 0;
+  }
+  return Number(data.budget) || 0;
+}
+
+function getCurrentBudget(){
+  return getBudgetForMonth(currentMonthKey());
+}
+
+function setCurrentBudget(amount){
+  const key = currentMonthKey();
+  if(!data.monthlyBudgets || typeof data.monthlyBudgets !== "object"){
+    data.monthlyBudgets = {};
+  }
+  data.monthlyBudgets[key] = Math.max(0, Number(amount) || 0);
+  // Keep legacy field in sync for backups / older code paths
+  data.budget = data.monthlyBudgets[key];
+}
+
+function currentMonthLabel(){
+  return new Date().toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+}
+
+
+function loadData(){
+
+  try{
+
+    const saved =
+      localStorage.getItem(STORAGE_KEY);
+
+    if(!saved){
+
+      return JSON.parse(
+        JSON.stringify(DEFAULT_DATA)
+      );
+
+    }
+
+    const parsed =
+      JSON.parse(saved);
+
+    const monthlyBudgets =
+      parsed.monthlyBudgets && typeof parsed.monthlyBudgets === "object"
+        ? parsed.monthlyBudgets
+        : {};
+
+    // Migrate old single budget into current month if map empty
+    if(Object.keys(monthlyBudgets).length === 0 && parsed.budget != null){
+      const key = monthKeyFrom(Date.now());
+      monthlyBudgets[key] = Number(parsed.budget) || 0;
+    }
+
+    return {
+      ...DEFAULT_DATA,
+      ...parsed,
+      monthlyBudgets: monthlyBudgets,
+      expenses:Array.isArray(parsed.expenses)
+        ? parsed.expenses
+        : [],
+      incomes:Array.isArray(parsed.incomes)
+        ? parsed.incomes
+        : [],
+      manualDebits:Array.isArray(parsed.manualDebits)
+        ? parsed.manualDebits
+        : []
+    };
+
+  }catch(error){
+
+    console.error(error);
+
+    return JSON.parse(
+      JSON.stringify(DEFAULT_DATA)
+    );
+
+  }
+
+}
+
+
+function saveData(){
+
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(data)
+  );
+
+}
+
+
+/* ======================================================
+   HELPERS
+====================================================== */
+
+function money(value){
+
+  return new Intl.NumberFormat(
+    "en-IN",
+    {
+      style:"currency",
+      currency:"INR",
+      minimumFractionDigits:2
+    }
+  ).format(Number(value) || 0);
+
+}
+
+
+function escapeHTML(value){
+
+  return String(value)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+
+}
+
+
+function dateText(timestamp){
+
+  return new Date(timestamp)
+    .toLocaleDateString(
+      "en-IN",
+      {
+        day:"2-digit",
+        month:"short",
+        year:"numeric"
+      }
+    );
+
+}
+
+/** YYYY-MM-DD for <input type="date"> (local timezone) */
+function todayInputValue(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return y + "-" + m + "-" + day;
+}
+
+/**
+ * Convert date input (YYYY-MM-DD) to timestamp.
+ * Uses local noon so the calendar day stays stable across timezones.
+ * Falls back to now if empty/invalid.
+ */
+function dateInputToTimestamp(value){
+  if(!value || typeof value !== "string") return Date.now();
+  const parts = value.trim().split("-");
+  if(parts.length !== 3) return Date.now();
+  const y = Number(parts[0]);
+  const m = Number(parts[1]);
+  const day = Number(parts[2]);
+  if(!y || !m || !day) return Date.now();
+  const ts = new Date(y, m - 1, day, 12, 0, 0, 0).getTime();
+  return isFinite(ts) ? ts : Date.now();
+}
+
+function setDefaultEntryDates(){
+  const today = todayInputValue();
+  const expenseDate = document.getElementById("input-date");
+  const creditDate = document.getElementById("credit-date");
+  const debitDate = document.getElementById("debit-date");
+  if(expenseDate && !expenseDate.value) expenseDate.value = today;
+  if(creditDate && !creditDate.value) creditDate.value = today;
+  if(debitDate && !debitDate.value) debitDate.value = today;
+}
+
+
+function showToast(message){
+
+  const toast =
+    document.getElementById("toast");
+
+  toast.textContent = message;
+
+  toast.classList.add("show");
+
+  clearTimeout(window.toastTimer);
+
+  window.toastTimer =
+    setTimeout(function(){
+
+      toast.classList.remove("show");
+
+    },2200);
+
+}
+
+
+/* ======================================================
+   MONTH
+====================================================== */
+
+document.getElementById(
+  "month-label"
+).textContent =
+  new Date().toLocaleDateString(
+    "en-IN",
+    {
+      month:"long",
+      year:"numeric"
+    }
+  );
+
+
+/* ======================================================
+   BUDGET
+====================================================== */
+
+const budgetInput =
+  document.getElementById(
+    "budget-input"
+  );
+
+budgetInput.value = getCurrentBudget();
+
+budgetInput.addEventListener(
+  "input",
+  function(){
+    setCurrentBudget(budgetInput.value);
+    saveData();
+    render();
+  }
+);
+
+
+/* ======================================================
+   OPENING BALANCE
+====================================================== */
+
+const openingInput =
+  document.getElementById(
+    "opening-input"
+  );
+
+openingInput.value =
+  data.openingBalance;
+
+
+openingInput.addEventListener(
+  "input",
+  function(){
+
+    data.openingBalance =
+      Number(openingInput.value) || 0;
+
+    saveData();
+
+    renderPassbook();
+
+  }
+);
+
+
+/* ======================================================
+   ADD EXPENSE
+====================================================== */
+
+setDefaultEntryDates();
+
+document.getElementById(
+  "add-form"
+).addEventListener(
+  "submit",
+  function(event){
+
+    event.preventDefault();
+
+    const name =
+      document.getElementById(
+        "input-name"
+      ).value.trim();
+
+    const amount =
+      Number(
+        document.getElementById(
+          "input-amount"
+        ).value
+      );
+
+    const category =
+      document.getElementById(
+        "input-category"
+      ).value;
+
+    const entryDate =
+      document.getElementById(
+        "input-date"
+      ).value;
+
+    if(!name || amount <= 0){
+
+      showToast(
+        "Enter a valid expense."
+      );
+
+      return;
+
+    }
+
+    data.expenses.unshift({
+
+      id:
+        Date.now().toString() +
+        Math.random().toString(16).slice(2),
+
+      name:name,
+      amount:amount,
+      category:category,
+      createdAt: dateInputToTimestamp(entryDate)
+
+    });
+
+    // Keep list sorted by date (newest first for expenses list feel)
+    data.expenses.sort(function(a, b){
+      return (b.createdAt || 0) - (a.createdAt || 0);
+    });
+
+    saveData();
+
+    event.target.reset();
+    document.getElementById("input-date").value = todayInputValue();
+
+    showToast("Expense added");
+
+    render();
+
+  }
+);
+
+
+/* ======================================================
+   CREDIT
+====================================================== */
+
+document.getElementById(
+  "credit-form"
+).addEventListener(
+  "submit",
+  function(event){
+
+    event.preventDefault();
+
+    const name =
+      document.getElementById(
+        "credit-name"
+      ).value.trim();
+
+    const amount =
+      Number(
+        document.getElementById(
+          "credit-amount"
+        ).value
+      );
+
+    const entryDate =
+      document.getElementById(
+        "credit-date"
+      ).value;
+
+    if(!name || amount <= 0){
+
+      showToast(
+        "Enter a valid credit."
+      );
+
+      return;
+
+    }
+
+    data.incomes.push({
+
+      id:
+        Date.now().toString() +
+        Math.random().toString(16).slice(2),
+
+      name:name,
+      amount:amount,
+      createdAt: dateInputToTimestamp(entryDate)
+
+    });
+
+    saveData();
+
+    event.target.reset();
+    document.getElementById("credit-date").value = todayInputValue();
+
+    showToast("Credit added");
+
+    renderPassbook();
+
+  }
+);
+
+
+/* ======================================================
+   DEBIT
+====================================================== */
+
+document.getElementById(
+  "debit-form"
+).addEventListener(
+  "submit",
+  function(event){
+
+    event.preventDefault();
+
+    const name =
+      document.getElementById(
+        "debit-name"
+      ).value.trim();
+
+    const amount =
+      Number(
+        document.getElementById(
+          "debit-amount"
+        ).value
+      );
+
+    const entryDate =
+      document.getElementById(
+        "debit-date"
+      ).value;
+
+    if(!name || amount <= 0){
+
+      showToast(
+        "Enter a valid debit."
+      );
+
+      return;
+
+    }
+
+    data.manualDebits.push({
+
+      id:
+        Date.now().toString() +
+        Math.random().toString(16).slice(2),
+
+      name:name,
+      amount:amount,
+      createdAt: dateInputToTimestamp(entryDate)
+
+    });
+
+    saveData();
+
+    event.target.reset();
+    document.getElementById("debit-date").value = todayInputValue();
+
+    showToast("Debit added");
+
+    renderPassbook();
+
+  }
+);
+
+
+/* ======================================================
+   CATEGORY
+====================================================== */
+
+const categoryColors = {
+  Food:"#5eead4",
+  Transport:"#7c9eff",
+  Bills:"#f5a35c",
+  Business:"#45b99a",
+  Fun:"#c792ea",
+  Other:"#8992a3"
+};
+
+const CATEGORY_ORDER = ["Food","Transport","Bills","Business","Fun","Other"];
+
+function getCategoryTotals(){
+  const totals = {};
+  CATEGORY_ORDER.forEach(function(c){ totals[c] = 0; });
+  getCurrentMonthExpenses().forEach(function(item){
+    const cat = item.category || "Other";
+    if(totals[cat] === undefined) totals[cat] = 0;
+    totals[cat] += Number(item.amount) || 0;
+  });
+  return totals;
+}
+
+function renderDonut(totals, grandTotal){
+  const svg = document.getElementById("donut-chart");
+  const totalEl = document.getElementById("donut-total");
+  if(!svg) return;
+
+  if(totalEl){
+    totalEl.textContent = grandTotal > 0
+      ? "₹" + Math.round(grandTotal).toLocaleString("en-IN")
+      : "₹0";
+  }
+
+  const cx = 60, cy = 60, r = 42, stroke = 16;
+  const circ = 2 * Math.PI * r;
+  let offset = 0;
+
+  const entries = Object.entries(totals).filter(function(e){ return e[1] > 0; });
+  if(entries.length === 0){
+    svg.innerHTML = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#e8eef0" stroke-width="${stroke}"/>`;
+    return;
+  }
+
+  // rotate so first segment starts at top
+  let html = `<g transform="rotate(-90 ${cx} ${cy})">`;
+  entries.forEach(function(entry){
+    const cat = entry[0];
+    const val = entry[1];
+    const frac = val / grandTotal;
+    const dash = frac * circ;
+    const gap = circ - dash;
+    const color = categoryColors[cat] || "#8992a3";
+    html += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}"
+      stroke-dasharray="${dash} ${gap}" stroke-dashoffset="${-offset}" stroke-linecap="butt"/>`;
+    offset += dash;
+  });
+  html += `</g>`;
+  // inner hole look is from stroke only; soft ring behind
+  svg.innerHTML = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#f0f4f6" stroke-width="${stroke}"/>` + html;
+}
+
+function renderCategories(){
+  const container = document.getElementById("categories");
+  if(!container) return;
+
+  const totals = getCategoryTotals();
+  let grandTotal = 0;
+  Object.keys(totals).forEach(function(k){ grandTotal += totals[k]; });
+
+  renderDonut(totals, grandTotal);
+
+  // Sort by amount desc, keep zeros at end
+  const entries = Object.entries(totals).sort(function(a,b){
+    return b[1] - a[1];
+  });
+
+  container.innerHTML = entries.map(function(entry){
+    const category = entry[0];
+    const total = entry[1];
+    const pctOfSpend = grandTotal > 0 ? Math.round((total / grandTotal) * 100) : 0;
+    const barPct = grandTotal > 0 ? (total / grandTotal) * 100 : 0;
+    const color = categoryColors[category] || "#8992a3";
+
+    return `
+      <div class="cat-modern">
+        <div class="cat-top">
+          <div class="cat-name">${escapeHTML(category)}</div>
+          <div class="cat-amount">${money(total)}</div>
+        </div>
+        <div class="cat-sub">${pctOfSpend}% of spending</div>
+        <div class="cat-bar-track">
+          <div class="cat-bar-fill" style="width:${barPct}%;background:${color}"></div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderDayByDay(){
+  const chart = document.getElementById("day-chart");
+  const avgEl = document.getElementById("day-avg");
+  if(!chart) return;
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const today = now.getDate();
+
+  const daily = {};
+  for(let d = 1; d <= daysInMonth; d++) daily[d] = 0;
+
+  data.expenses.forEach(function(item){
+    const dt = new Date(item.createdAt);
+    if(dt.getFullYear() === year && dt.getMonth() === month){
+      const day = dt.getDate();
+      daily[day] = (daily[day] || 0) + (Number(item.amount) || 0);
+    }
+  });
+
+  // Show last 14 days of the month up to today for readability on mobile
+  const startDay = Math.max(1, today - 13);
+  let maxVal = 1;
+  let sum = 0;
+  let countWith = 0;
+  for(let d = startDay; d <= today; d++){
+    if(daily[d] > maxVal) maxVal = daily[d];
+    if(daily[d] > 0){ sum += daily[d]; countWith++; }
+  }
+  // average over days elapsed this month
+  let monthSum = 0;
+  for(let d = 1; d <= today; d++) monthSum += daily[d];
+  const avg = today > 0 ? monthSum / today : 0;
+
+  let html = "";
+  for(let d = startDay; d <= today; d++){
+    const val = daily[d] || 0;
+    const h = Math.max(4, Math.round((val / maxVal) * 100));
+    const empty = val === 0 ? " empty" : "";
+    html += `
+      <div class="day-col" title="${dateText(new Date(year, month, d).getTime())}: ${money(val)}">
+        <div class="day-bar-track">
+          <div class="day-bar${empty}" style="height:${val === 0 ? 4 : h}%"></div>
+        </div>
+        <div class="day-label">${d}</div>
+      </div>
+    `;
+  }
+  chart.innerHTML = html;
+
+  if(avgEl){
+    avgEl.textContent = "₹" + Math.round(avg).toLocaleString("en-IN") + " / day";
+  }
+}
+
+
+/* ======================================================
+   EXPENSE LIST
+====================================================== */
+
+document.getElementById(
+  "expense-search"
+).addEventListener(
+  "input",
+  renderExpenses
+);
+
+
+function renderExpenses(){
+
+  const list =
+    document.getElementById(
+      "expense-list"
+    );
+
+  const empty =
+    document.getElementById(
+      "empty"
+    );
+
+  const search =
+    document.getElementById(
+      "expense-search"
+    ).value
+     .trim()
+     .toLowerCase();
+
+  // Cost Tracker: only this month's transactions
+  const filtered =
+    getCurrentMonthExpenses().filter(
+      function(item){
+
+        const name = (item.name || "").toLowerCase();
+        const cat = (item.category || "").toLowerCase();
+        return name.includes(search) || cat.includes(search);
+
+      }
+    );
+
+  list.innerHTML = "";
+
+  if(filtered.length === 0){
+
+    empty.style.display = "block";
+
+    return;
+
+  }
+
+  empty.style.display = "none";
+
+  filtered.forEach(
+    function(item){
+
+      const row =
+        document.createElement("div");
+
+      row.className =
+        "expense-item";
+
+      row.innerHTML = `
+
+        <div
+          class="dot"
+          style="
+            background:${categoryColors[item.category]}
+          "
+        ></div>
+
+        <div>
+
+          <div class="expense-name">
+            ${escapeHTML(item.name)}
+          </div>
+
+          <div class="expense-date">
+            ${dateText(item.createdAt)}
+          </div>
+
+        </div>
+
+        <div class="expense-cat">
+          ${escapeHTML(item.category)}
+        </div>
+
+        <div class="expense-amount">
+          ${money(item.amount)}
+        </div>
+
+        <button
+          class="delete-btn"
+          data-expense-id="${item.id}"
+          title="Delete"
+        >
+          ×
+        </button>
+
+      `;
+
+      list.appendChild(row);
+
+    }
+  );
+
+  list
+    .querySelectorAll("[data-expense-id]")
+    .forEach(
+      function(button){
+
+        button.addEventListener(
+          "click",
+          function(){
+
+            if(
+              confirm(
+                "Delete this expense?"
+              )
+            ){
+
+              data.expenses =
+                data.expenses.filter(
+                  function(item){
+
+                    return item.id !==
+                      button.dataset.expenseId;
+
+                  }
+                );
+
+              saveData();
+
+              showToast(
+                "Expense deleted"
+              );
+
+              render();
+
+            }
+
+          }
+        );
+
+      }
+    );
+
+}
+
+
+/* ======================================================
+   PASSBOOK TRANSACTIONS + PERIOD FILTER
+====================================================== */
+
+/** Active passbook period filter. null = all time */
+let passbookFilter = {
+  from: null,  // timestamp start of day, inclusive
+  to: null,    // timestamp end of day, inclusive
+  label: "All time"
+};
+
+function getAllTransactions(){
+
+  const transactions = [];
+
+  data.expenses.forEach(
+    function(item){
+
+      transactions.push({
+
+        id:item.id,
+        name:item.name,
+        amount:Number(item.amount),
+        createdAt:item.createdAt,
+        type:"debit",
+        source:"expense"
+
+      });
+
+    }
+  );
+
+  data.incomes.forEach(
+    function(item){
+
+      transactions.push({
+
+        id:item.id,
+        name:item.name,
+        amount:Number(item.amount),
+        createdAt:item.createdAt,
+        type:"credit",
+        source:"income"
+
+      });
+
+    }
+  );
+
+  data.manualDebits.forEach(
+    function(item){
+
+      transactions.push({
+
+        id:item.id,
+        name:item.name,
+        amount:Number(item.amount),
+        createdAt:item.createdAt,
+        type:"debit",
+        source:"manual"
+
+      });
+
+    }
+  );
+
+  transactions.sort(
+    function(a,b){
+
+      return a.createdAt - b.createdAt;
+
+    }
+  );
+
+  return transactions;
+
+}
+
+/** All transactions (sorted). Kept for compatibility. */
+function getTransactions(){
+  return getAllTransactions();
+}
+
+/**
+ * Opening balance as of a given timestamp (transactions strictly before it).
+ */
+function getOpeningBalanceAt(beforeTs){
+  let balance = Number(data.openingBalance) || 0;
+  const all = getAllTransactions();
+  for(let i = 0; i < all.length; i++){
+    const item = all[i];
+    if(beforeTs != null && item.createdAt >= beforeTs) break;
+    if(item.type === "credit") balance += item.amount;
+    else balance -= item.amount;
+  }
+  return balance;
+}
+
+/**
+ * Transactions within the active filter window (inclusive).
+ * If no filter, returns all.
+ */
+function getFilteredTransactions(){
+  const all = getAllTransactions();
+  if(passbookFilter.from == null && passbookFilter.to == null){
+    return all;
+  }
+  return all.filter(function(item){
+    if(passbookFilter.from != null && item.createdAt < passbookFilter.from) return false;
+    if(passbookFilter.to != null && item.createdAt > passbookFilter.to) return false;
+    return true;
+  });
+}
+
+function startOfDay(ts){
+  const d = new Date(ts);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+function endOfDay(ts){
+  const d = new Date(ts);
+  d.setHours(23, 59, 59, 999);
+  return d.getTime();
+}
+
+function startOfMonth(year, monthIndex){
+  return new Date(year, monthIndex, 1, 0, 0, 0, 0).getTime();
+}
+
+function endOfMonth(year, monthIndex){
+  return new Date(year, monthIndex + 1, 0, 23, 59, 59, 999).getTime();
+}
+
+function formatPeriodLabel(from, to){
+  if(from == null && to == null) return "All time";
+  const opts = { day:"2-digit", month:"short", year:"numeric" };
+  const a = from != null ? new Date(from).toLocaleDateString("en-IN", opts) : "…";
+  const b = to != null ? new Date(to).toLocaleDateString("en-IN", opts) : "…";
+  return a + " → " + b;
+}
+
+function populatePassbookYearSelect(){
+  const yearSel = document.getElementById("pb-year");
+  if(!yearSel) return;
+  const nowY = new Date().getFullYear();
+  const years = new Set();
+  years.add(nowY);
+  years.add(nowY - 1);
+  years.add(nowY + 1);
+  getAllTransactions().forEach(function(t){
+    years.add(new Date(t.createdAt).getFullYear());
+  });
+  const sorted = Array.from(years).sort(function(a,b){ return b - a; });
+  const current = yearSel.value;
+  yearSel.innerHTML = "";
+  sorted.forEach(function(y){
+    const opt = document.createElement("option");
+    opt.value = String(y);
+    opt.textContent = String(y);
+    yearSel.appendChild(opt);
+  });
+  if(current && sorted.indexOf(Number(current)) >= 0){
+    yearSel.value = current;
+  }else{
+    yearSel.value = String(nowY);
+  }
+}
+
+function applyPassbookFilterFromUI(){
+  const monthSel = document.getElementById("pb-month");
+  const yearSel = document.getElementById("pb-year");
+  const fromInput = document.getElementById("pb-from");
+  const toInput = document.getElementById("pb-to");
+
+  let from = null;
+  let to = null;
+
+  // Prefer explicit From/To if either is filled
+  if(fromInput.value || toInput.value){
+    if(fromInput.value){
+      from = startOfDay(dateInputToTimestamp(fromInput.value));
+    }
+    if(toInput.value){
+      to = endOfDay(dateInputToTimestamp(toInput.value));
+    }
+  }else if(monthSel.value !== ""){
+    const y = Number(yearSel.value) || new Date().getFullYear();
+    const m = Number(monthSel.value);
+    from = startOfMonth(y, m);
+    to = endOfMonth(y, m);
+  }
+
+  if(from != null && to != null && from > to){
+    const tmp = from;
+    from = to;
+    to = tmp;
+  }
+
+  passbookFilter.from = from;
+  passbookFilter.to = to;
+  passbookFilter.label = formatPeriodLabel(from, to);
+
+  const labelEl = document.getElementById("period-label");
+  if(labelEl) labelEl.textContent = "Showing: " + passbookFilter.label;
+
+  renderStatement();
+}
+
+function setThisMonthFilter(){
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  const from = startOfMonth(y, m);
+  const to = endOfMonth(y, m);
+
+  document.getElementById("pb-month").value = String(m);
+  document.getElementById("pb-year").value = String(y);
+  document.getElementById("pb-from").value = "";
+  document.getElementById("pb-to").value = "";
+
+  passbookFilter.from = from;
+  passbookFilter.to = to;
+  passbookFilter.label = formatPeriodLabel(from, to);
+
+  const labelEl = document.getElementById("period-label");
+  if(labelEl) labelEl.textContent = "Showing: " + passbookFilter.label;
+
+  renderStatement();
+}
+
+function clearPassbookFilter(){
+  document.getElementById("pb-month").value = "";
+  document.getElementById("pb-from").value = "";
+  document.getElementById("pb-to").value = "";
+  populatePassbookYearSelect();
+
+  passbookFilter.from = null;
+  passbookFilter.to = null;
+  passbookFilter.label = "All time";
+
+  const labelEl = document.getElementById("period-label");
+  if(labelEl) labelEl.textContent = "Showing: All time";
+
+  renderStatement();
+}
+
+function initPassbookFilterUI(){
+  populatePassbookYearSelect();
+
+  const applyBtn = document.getElementById("pb-apply");
+  const thisMonthBtn = document.getElementById("pb-this-month");
+  const clearBtn = document.getElementById("pb-clear");
+  const monthSel = document.getElementById("pb-month");
+  const yearSel = document.getElementById("pb-year");
+
+  if(applyBtn) applyBtn.onclick = applyPassbookFilterFromUI;
+  if(thisMonthBtn) thisMonthBtn.onclick = setThisMonthFilter;
+  if(clearBtn) clearBtn.onclick = clearPassbookFilter;
+
+  // Changing month/year clears custom dates so Apply uses month
+  function onMonthYearChange(){
+    document.getElementById("pb-from").value = "";
+    document.getElementById("pb-to").value = "";
+  }
+  if(monthSel) monthSel.onchange = onMonthYearChange;
+  if(yearSel) yearSel.onchange = onMonthYearChange;
+
+  // Changing From/To clears month selection so Apply uses dates
+  function onDateChange(){
+    document.getElementById("pb-month").value = "";
+  }
+  const fromInput = document.getElementById("pb-from");
+  const toInput = document.getElementById("pb-to");
+  if(fromInput) fromInput.onchange = onDateChange;
+  if(toInput) toInput.onchange = onDateChange;
+}
+
+
+/* ======================================================
+   PASSBOOK RENDER
+====================================================== */
+
+function renderPassbook(){
+
+  // Transaction tab: always full ledger (no period filter)
+  const transactions = getAllTransactions();
+  const periodOpening = Number(data.openingBalance) || 0;
+
+  let balance = periodOpening;
+  let totalCredit = 0;
+  let totalDebit = 0;
+
+  transactions.forEach(
+    function(item){
+
+      if(item.type === "credit"){
+
+        totalCredit += item.amount;
+        balance += item.amount;
+
+      }else{
+
+        totalDebit += item.amount;
+        balance -= item.amount;
+
+      }
+
+    }
+  );
+
+  const creditEl = document.getElementById("pb-total-credit");
+  const debitEl = document.getElementById("pb-total-debit");
+  const balanceElement = document.getElementById("pb-balance");
+
+  if(creditEl) creditEl.textContent = money(totalCredit);
+  if(debitEl) debitEl.textContent = money(totalDebit);
+
+  if(balanceElement){
+    balanceElement.textContent = money(balance);
+    balanceElement.style.color =
+      balance >= 0 ? "var(--accent)" : "var(--danger)";
+  }
+
+  const tbody = document.getElementById("passbook-body");
+  if(!tbody) return;
+
+  tbody.innerHTML = "";
+
+
+  /* OPENING BALANCE */
+
+  const openingRow = document.createElement("tr");
+  openingRow.className = "opening-row";
+
+  openingRow.innerHTML = `
+    <td>—</td>
+    <td>Opening Balance</td>
+    <td class="num">—</td>
+    <td class="num">—</td>
+    <td class="num balance">${money(periodOpening)}</td>
+    <td></td>
+  `;
+
+  tbody.appendChild(openingRow);
+
+
+  /* TRANSACTIONS */
+
+  let running = periodOpening;
+
+  transactions.forEach(
+    function(item){
+
+      if(item.type === "credit"){
+
+        running += item.amount;
+
+      }else{
+
+        running -= item.amount;
+
+      }
+
+      const row =
+        document.createElement("tr");
+
+      let deleteHTML = "";
+
+      if(item.source === "expense"){
+
+        deleteHTML = `
+          <button
+            class="delete-btn"
+            data-delete-expense="${item.id}"
+          >
+            ×
+          </button>
+        `;
+
+      }else if(item.source === "income"){
+
+        deleteHTML = `
+          <button
+            class="delete-btn"
+            data-delete-income="${item.id}"
+          >
+            ×
+          </button>
+        `;
+
+      }else{
+
+        deleteHTML = `
+          <button
+            class="delete-btn"
+            data-delete-debit="${item.id}"
+          >
+            ×
+          </button>
+        `;
+
+      }
+
+      row.innerHTML = `
+
+        <td>
+          ${dateText(item.createdAt)}
+        </td>
+
+        <td>
+          ${escapeHTML(item.name)}
+        </td>
+
+        <td class="num debit">
+          ${
+            item.type === "debit"
+              ? money(item.amount)
+              : "—"
+          }
+        </td>
+
+        <td class="num credit">
+          ${
+            item.type === "credit"
+              ? money(item.amount)
+              : "—"
+          }
+        </td>
+
+        <td class="num balance">
+          ${money(running)}
+        </td>
+
+        <td>
+          ${deleteHTML}
+        </td>
+
+      `;
+
+      tbody.appendChild(row);
+
+    }
+  );
+
+
+  /* DELETE EXPENSE */
+
+  tbody
+    .querySelectorAll(
+      "[data-delete-expense]"
+    )
+    .forEach(
+      function(button){
+
+        button.onclick =
+          function(){
+
+            if(
+              confirm(
+                "Delete this expense?"
+              )
+            ){
+
+              data.expenses =
+                data.expenses.filter(
+                  function(item){
+
+                    return item.id !==
+                      button.dataset.deleteExpense;
+
+                  }
+                );
+
+              saveData();
+              render();
+
+              showToast(
+                "Expense deleted"
+              );
+
+            }
+
+          };
+
+      }
+    );
+
+
+  /* DELETE CREDIT */
+
+  tbody
+    .querySelectorAll(
+      "[data-delete-income]"
+    )
+    .forEach(
+      function(button){
+
+        button.onclick =
+          function(){
+
+            if(
+              confirm(
+                "Delete this credit?"
+              )
+            ){
+
+              data.incomes =
+                data.incomes.filter(
+                  function(item){
+
+                    return item.id !==
+                      button.dataset.deleteIncome;
+
+                  }
+                );
+
+              saveData();
+              renderPassbook();
+              if(typeof renderStatement === "function") renderStatement();
+
+              showToast(
+                "Credit deleted"
+              );
+
+            }
+
+          };
+
+      }
+    );
+
+
+  /* DELETE DEBIT */
+
+  tbody
+    .querySelectorAll(
+      "[data-delete-debit]"
+    )
+    .forEach(
+      function(button){
+
+        button.onclick =
+          function(){
+
+            if(
+              confirm(
+                "Delete this debit?"
+              )
+            ){
+
+              data.manualDebits =
+                data.manualDebits.filter(
+                  function(item){
+
+                    return item.id !==
+                      button.dataset.deleteDebit;
+
+                  }
+                );
+
+              saveData();
+              renderPassbook();
+              if(typeof renderStatement === "function") renderStatement();
+
+              showToast(
+                "Debit deleted"
+              );
+
+            }
+
+          };
+
+      }
+    );
+
+}
+
+
+/* ======================================================
+   STATEMENT / PASSBOOK EXTRACT (filtered)
+====================================================== */
+
+function renderStatement(){
+
+  if(typeof populatePassbookYearSelect === "function"){
+    try { populatePassbookYearSelect(); } catch(e){}
+  }
+
+  const transactions = getFilteredTransactions();
+  const periodOpening =
+    passbookFilter.from != null
+      ? getOpeningBalanceAt(passbookFilter.from)
+      : (Number(data.openingBalance) || 0);
+
+  let balance = periodOpening;
+  let totalCredit = 0;
+  let totalDebit = 0;
+
+  transactions.forEach(function(item){
+    if(item.type === "credit"){
+      totalCredit += item.amount;
+      balance += item.amount;
+    }else{
+      totalDebit += item.amount;
+      balance -= item.amount;
+    }
+  });
+
+  const stOpen = document.getElementById("st-opening");
+  const stCredit = document.getElementById("st-total-credit");
+  const stDebit = document.getElementById("st-total-debit");
+  const stBal = document.getElementById("st-balance");
+
+  if(stOpen) stOpen.textContent = money(periodOpening);
+  if(stCredit) stCredit.textContent = money(totalCredit);
+  if(stDebit) stDebit.textContent = money(totalDebit);
+  if(stBal){
+    stBal.textContent = money(balance);
+    stBal.style.color = balance >= 0 ? "var(--accent)" : "var(--danger)";
+  }
+
+  const labelEl = document.getElementById("period-label");
+  if(labelEl) labelEl.textContent = "Showing: " + (passbookFilter.label || "All time");
+
+  const tbody = document.getElementById("statement-body");
+  if(!tbody) return;
+  tbody.innerHTML = "";
+
+  const openingRow = document.createElement("tr");
+  openingRow.className = "opening-row";
+  const openingLabel =
+    passbookFilter.from != null
+      ? "Opening Balance (period start)"
+      : "Opening Balance";
+
+  openingRow.innerHTML = `
+    <td>—</td>
+    <td>${openingLabel}</td>
+    <td class="num">—</td>
+    <td class="num">—</td>
+    <td class="num balance">${money(periodOpening)}</td>
+  `;
+  tbody.appendChild(openingRow);
+
+  let running = periodOpening;
+  transactions.forEach(function(item){
+    if(item.type === "credit") running += item.amount;
+    else running -= item.amount;
+
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${dateText(item.createdAt)}</td>
+      <td>${escapeHTML(item.name)}</td>
+      <td class="num debit">${item.type === "debit" ? money(item.amount) : "—"}</td>
+      <td class="num credit">${item.type === "credit" ? money(item.amount) : "—"}</td>
+      <td class="num balance">${money(running)}</td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+
+/* ======================================================
+   MAIN RENDER
+====================================================== */
+
+function render(){
+
+  // Cost Tracker stats = current month only
+  const monthExpenses = getCurrentMonthExpenses();
+  const spent = monthExpenses.reduce(
+    function(total, item){
+      return total + (Number(item.amount) || 0);
+    },
+    0
+  );
+
+  const budget = getCurrentBudget();
+  const remaining = budget - spent;
+
+  // Keep budget input in sync with this month's budget
+  if(budgetInput && document.activeElement !== budgetInput){
+    budgetInput.value = budget;
+  }
+
+  const budgetMonthLabel = document.getElementById("budget-month-label");
+  if(budgetMonthLabel){
+    budgetMonthLabel.textContent = "Budget · " + currentMonthLabel();
+  }
+
+  document.getElementById(
+    "stat-budget"
+  ).textContent =
+    money(budget);
+
+  document.getElementById(
+    "stat-spent"
+  ).textContent =
+    money(spent);
+
+  const remainingElement =
+    document.getElementById(
+      "stat-remaining"
+    );
+
+  remainingElement.textContent =
+    money(remaining);
+
+  remainingElement.classList.remove(
+    "positive",
+    "negative"
+  );
+
+  remainingElement.classList.add(
+    remaining >= 0
+      ? "positive"
+      : "negative"
+  );
+
+  const progress =
+    document.getElementById(
+      "progress-fill"
+    );
+
+  const percent =
+    budget > 0
+      ? Math.min(
+          (spent / budget) * 100,
+          100
+        )
+      : 0;
+
+  progress.style.width =
+    percent + "%";
+
+  if(percent >= 100){
+
+    progress.style.background =
+      "var(--danger)";
+
+  }else if(percent >= 80){
+
+    progress.style.background =
+      "var(--warning)";
+
+  }else{
+
+    progress.style.background =
+      "var(--accent)";
+
+  }
+
+  renderCategories();
+  if(typeof renderDayByDay === "function") renderDayByDay();
+  renderExpenses();
+  renderPassbook();
+  if(typeof renderStatement === "function") renderStatement();
+
+}
+
+
+/* ======================================================
+   NAVIGATION
+====================================================== */
+
+const trackerButton = document.getElementById("nav-tracker");
+const passbookButton = document.getElementById("nav-passbook");
+const statementButton = document.getElementById("nav-statement");
+
+const trackerPage = document.getElementById("page-tracker");
+const passbookPage = document.getElementById("page-passbook");
+const statementPage = document.getElementById("page-statement");
+
+function setActiveTab(which){
+  trackerButton.classList.remove("active");
+  passbookButton.classList.remove("active");
+  if(statementButton) statementButton.classList.remove("active");
+
+  trackerPage.classList.remove("active");
+  passbookPage.classList.remove("active");
+  if(statementPage) statementPage.classList.remove("active");
+
+  if(which === "tracker"){
+    trackerButton.classList.add("active");
+    trackerPage.classList.add("active");
+  }else if(which === "passbook"){
+    passbookButton.classList.add("active");
+    passbookPage.classList.add("active");
+  }else if(which === "statement"){
+    if(statementButton) statementButton.classList.add("active");
+    if(statementPage) statementPage.classList.add("active");
+    if(typeof renderStatement === "function") renderStatement();
+  }
+}
+
+trackerButton.onclick = function(){ setActiveTab("tracker"); };
+passbookButton.onclick = function(){ setActiveTab("passbook"); };
+if(statementButton){
+  statementButton.onclick = function(){ setActiveTab("statement"); };
+}
+
+/* Tracker action buttons */
+(function(){
+  const scrollAdd = document.getElementById("btn-scroll-add");
+  const calBtn = document.getElementById("btn-calendar");
+  if(scrollAdd){
+    scrollAdd.onclick = function(){
+      const panel = document.getElementById("add-expense-panel");
+      if(panel){
+        panel.scrollIntoView({ behavior:"smooth", block:"start" });
+        const name = document.getElementById("input-name");
+        if(name) setTimeout(function(){ name.focus(); }, 350);
+      }
+    };
+  }
+  if(calBtn){
+    calBtn.onclick = function(){
+      // Focus date field for picking a day / back-dating expense
+      const dateInput = document.getElementById("input-date");
+      const panel = document.getElementById("add-expense-panel");
+      if(panel) panel.scrollIntoView({ behavior:"smooth", block:"start" });
+      if(dateInput){
+        setTimeout(function(){
+          dateInput.focus();
+          if(typeof dateInput.showPicker === "function"){
+            try { dateInput.showPicker(); } catch(e){}
+          }
+        }, 350);
+      }
+    };
+  }
+})();
+
+
+/* ======================================================
+   CLEAR DATA
+====================================================== */
+
+document.getElementById(
+  "clear-data"
+).onclick =
+  function(){
+
+    if(
+      !confirm(
+        "Are you sure you want to delete all data?"
+      )
+    ){
+
+      return;
+
+    }
+
+    data =
+      JSON.parse(
+        JSON.stringify(DEFAULT_DATA)
+      );
+
+    budgetInput.value = getCurrentBudget();
+    openingInput.value = data.openingBalance;
+
+    saveData();
+    render();
+
+    showToast(
+      "All data cleared"
+    );
+
+  };
+
+
+/* ======================================================
+   IMPORT / EXPORT DATA  (JSON + Excel/CSV)
+====================================================== */
+
+function csvEscape(value){
+  const s = value == null ? "" : String(value);
+  if(/[",\n\r]/.test(s)){
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  return s;
+}
+
+function downloadTextFile(filename, text, mime){
+  // Android app: native Save As picker
+  if (window.AndroidBridge && typeof window.AndroidBridge.saveBackup === "function") {
+    window.AndroidBridge.saveBackup(filename, text);
+    return;
+  }
+  // Browser fallback
+  const blob = new Blob([text], { type: mime || "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+}
+
+function downloadJSON(filename, obj){
+  downloadTextFile(filename, JSON.stringify(obj, null, 2), "application/json");
+}
+
+/* ---------- Excel (CSV) export ---------- */
+function buildExcelCSV(){
+  const lines = [];
+  // UTF-8 BOM so Excel opens Hindi/Unicode correctly
+  lines.push("\uFEFF# Shared Money Backup (Excel-compatible CSV)");
+  lines.push("# Edit values in Excel / Google Sheets, then Import Excel in the app.");
+  lines.push("# Do not change the section headers (SETTINGS / EXPENSES / INCOMES / MANUAL_DEBITS).");
+  lines.push("");
+
+  lines.push("SETTINGS");
+  lines.push("key,value");
+  lines.push("budget," + csvEscape(data.budget));
+  lines.push("openingBalance," + csvEscape(data.openingBalance));
+  lines.push("");
+
+  lines.push("EXPENSES");
+  lines.push("id,name,amount,category,createdAt");
+  (data.expenses || []).forEach(function(item){
+    lines.push([
+      csvEscape(item.id),
+      csvEscape(item.name),
+      csvEscape(item.amount),
+      csvEscape(item.category || "Other"),
+      csvEscape(item.createdAt)
+    ].join(","));
+  });
+  lines.push("");
+
+  lines.push("INCOMES");
+  lines.push("id,name,amount,createdAt");
+  (data.incomes || []).forEach(function(item){
+    lines.push([
+      csvEscape(item.id),
+      csvEscape(item.name),
+      csvEscape(item.amount),
+      csvEscape(item.createdAt)
+    ].join(","));
+  });
+  lines.push("");
+
+  lines.push("MANUAL_DEBITS");
+  lines.push("id,name,amount,createdAt");
+  (data.manualDebits || []).forEach(function(item){
+    lines.push([
+      csvEscape(item.id),
+      csvEscape(item.name),
+      csvEscape(item.amount),
+      csvEscape(item.createdAt)
+    ].join(","));
+  });
+  lines.push("");
+
+  return lines.join("\r\n");
+}
+
+function parseCSVLine(line){
+  const result = [];
+  let current = "";
+  let inQuotes = false;
+  for(let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if(inQuotes){
+      if(ch === '"'){
+        if(line[i + 1] === '"'){ current += '"'; i++; }
+        else inQuotes = false;
+      } else {
+        current += ch;
+      }
+    } else {
+      if(ch === '"') inQuotes = true;
+      else if(ch === ','){ result.push(current); current = ""; }
+      else current += ch;
+    }
+  }
+  result.push(current);
+  return result;
+}
+
+function parseExcelCSV(text){
+  // Strip BOM
+  if(text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+
+  const rawLines = text.split(/\r?\n/);
+  const sections = {
+    settings: {},
+    expenses: [],
+    incomes: [],
+    manualDebits: []
+  };
+
+  let mode = null; // settings | expenses | incomes | manualDebits
+  let header = null;
+
+  function isSectionHeader(line){
+    const t = line.trim().toUpperCase().replace(/\s+/g, "_");
+    if(t === "SETTINGS") return "settings";
+    if(t === "EXPENSES") return "expenses";
+    if(t === "INCOMES") return "incomes";
+    if(t === "MANUAL_DEBITS" || t === "MANUALDEBITS" || t === "DEBITS") return "manualDebits";
+    return null;
+  }
+
+  for(let i = 0; i < rawLines.length; i++){
+    let line = rawLines[i];
+    if(!line || !line.trim()) continue;
+    if(line.trim().charAt(0) === "#") continue;
+
+    const sec = isSectionHeader(line);
+    if(sec){
+      mode = sec;
+      header = null;
+      continue;
+    }
+
+    if(!mode) continue;
+
+    const cols = parseCSVLine(line);
+    if(!header){
+      // first non-empty line after section = header
+      header = cols.map(function(c){ return c.trim().toLowerCase(); });
+      continue;
+    }
+
+    if(mode === "settings"){
+      const key = (cols[0] || "").trim();
+      const val = (cols[1] || "").trim();
+      if(key) sections.settings[key] = val;
+      continue;
+    }
+
+    const row = {};
+    header.forEach(function(h, idx){
+      row[h] = (cols[idx] != null ? cols[idx] : "").trim();
+    });
+
+    // Skip completely empty rows
+    if(!row.name && !row.amount && !row.id) continue;
+
+    const amount = Number(String(row.amount).replace(/,/g, ""));
+    if(!isFinite(amount)) continue;
+
+    const id = row.id || (Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
+    let createdAt = Number(row.createdat || row.created_at || row.date);
+    if(!isFinite(createdAt) || createdAt < 100000){
+      // try parse date string
+      const d = Date.parse(row.createdat || row.created_at || row.date || "");
+      createdAt = isFinite(d) ? d : Date.now();
+    }
+
+    if(mode === "expenses"){
+      sections.expenses.push({
+        id: id,
+        name: row.name || "Expense",
+        amount: amount,
+        category: row.category || "Other",
+        createdAt: createdAt
+      });
+    } else if(mode === "incomes"){
+      sections.incomes.push({
+        id: id,
+        name: row.name || "Income",
+        amount: amount,
+        createdAt: createdAt
+      });
+    } else if(mode === "manualDebits"){
+      sections.manualDebits.push({
+        id: id,
+        name: row.name || "Debit",
+        amount: amount,
+        createdAt: createdAt
+      });
+    }
+  }
+
+  return {
+    budget: Number(sections.settings.budget) || DEFAULT_DATA.budget,
+    openingBalance: Number(sections.settings.openingbalance || sections.settings.openingBalance) || DEFAULT_DATA.openingBalance,
+    expenses: sections.expenses,
+    incomes: sections.incomes,
+    manualDebits: sections.manualDebits
+  };
+}
+
+/* ---------- Export Reports UI state ---------- */
+const exportState = {
+  period: "month",   // month | 3months | year | all
+  includeExpenses: true,
+  includeIncome: true,
+  includeDebits: true,
+  format: "csv"      // csv | json | pdf | txt | md
+};
+
+function getExportPeriodRange(){
+  const now = new Date();
+  let from = null;
+  let to = endOfDay(now.getTime());
+  if(exportState.period === "month"){
+    from = startOfMonth(now.getFullYear(), now.getMonth());
+  }else if(exportState.period === "3months"){
+    const d = new Date(now.getFullYear(), now.getMonth() - 2, 1, 0, 0, 0, 0);
+    from = d.getTime();
+  }else if(exportState.period === "year"){
+    from = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0).getTime();
+  }else{
+    from = null;
+    to = null;
+  }
+  return { from: from, to: to };
+}
+
+function filterByPeriod(items, from, to){
+  if(from == null && to == null) return items.slice();
+  return items.filter(function(item){
+    const t = item.createdAt;
+    if(from != null && t < from) return false;
+    if(to != null && t > to) return false;
+    return true;
+  });
+}
+
+function getExportSlice(){
+  const range = getExportPeriodRange();
+  const slice = {
+    budget: data.budget,
+    openingBalance: data.openingBalance,
+    expenses: [],
+    incomes: [],
+    manualDebits: [],
+    period: exportState.period,
+    periodLabel: (
+      exportState.period === "month" ? "This Month" :
+      exportState.period === "3months" ? "Last 3 Months" :
+      exportState.period === "year" ? "This Year" : "All Time"
+    )
+  };
+  if(exportState.includeExpenses){
+    slice.expenses = filterByPeriod(data.expenses || [], range.from, range.to);
+  }
+  if(exportState.includeIncome){
+    slice.incomes = filterByPeriod(data.incomes || [], range.from, range.to);
+  }
+  if(exportState.includeDebits){
+    slice.manualDebits = filterByPeriod(data.manualDebits || [], range.from, range.to);
+  }
+  return slice;
+}
+
+function buildExcelCSVFromSlice(slice){
+  const lines = [];
+  lines.push("\uFEFF# Shared Money Export");
+  lines.push("# Period: " + slice.periodLabel);
+  lines.push("# Generated: " + new Date().toLocaleString("en-IN"));
+  lines.push("");
+  lines.push("SETTINGS");
+  lines.push("key,value");
+  lines.push("budget," + csvEscape(slice.budget));
+  lines.push("openingBalance," + csvEscape(slice.openingBalance));
+  lines.push("period," + csvEscape(slice.periodLabel));
+  lines.push("");
+  if(exportState.includeExpenses){
+    lines.push("EXPENSES");
+    lines.push("id,name,amount,category,createdAt");
+    slice.expenses.forEach(function(item){
+      lines.push([
+        csvEscape(item.id),
+        csvEscape(item.name),
+        csvEscape(item.amount),
+        csvEscape(item.category || "Other"),
+        csvEscape(item.createdAt)
+      ].join(","));
+    });
+    lines.push("");
+  }
+  if(exportState.includeIncome){
+    lines.push("INCOMES");
+    lines.push("id,name,amount,createdAt");
+    slice.incomes.forEach(function(item){
+      lines.push([
+        csvEscape(item.id),
+        csvEscape(item.name),
+        csvEscape(item.amount),
+        csvEscape(item.createdAt)
+      ].join(","));
+    });
+    lines.push("");
+  }
+  if(exportState.includeDebits){
+    lines.push("MANUAL_DEBITS");
+    lines.push("id,name,amount,createdAt");
+    slice.manualDebits.forEach(function(item){
+      lines.push([
+        csvEscape(item.id),
+        csvEscape(item.name),
+        csvEscape(item.amount),
+        csvEscape(item.createdAt)
+      ].join(","));
+    });
+    lines.push("");
+  }
+  return lines.join("\r\n");
+}
+
+function buildTxtFromSlice(slice){
+  const lines = [];
+  lines.push("Shared Money — Export Report");
+  lines.push("Period: " + slice.periodLabel);
+  lines.push("Generated: " + new Date().toLocaleString("en-IN"));
+  lines.push("Budget: " + money(slice.budget));
+  lines.push("Opening Balance: " + money(slice.openingBalance));
+  lines.push("");
+  if(exportState.includeExpenses){
+    lines.push("=== EXPENSES (" + slice.expenses.length + ") ===");
+    slice.expenses.forEach(function(item){
+      lines.push(dateText(item.createdAt) + " | " + item.name + " | " + (item.category || "Other") + " | " + money(item.amount));
+    });
+    lines.push("");
+  }
+  if(exportState.includeIncome){
+    lines.push("=== INCOME (" + slice.incomes.length + ") ===");
+    slice.incomes.forEach(function(item){
+      lines.push(dateText(item.createdAt) + " | " + item.name + " | " + money(item.amount));
+    });
+    lines.push("");
+  }
+  if(exportState.includeDebits){
+    lines.push("=== DEBITS (" + slice.manualDebits.length + ") ===");
+    slice.manualDebits.forEach(function(item){
+      lines.push(dateText(item.createdAt) + " | " + item.name + " | " + money(item.amount));
+    });
+    lines.push("");
+  }
+  return lines.join("\n");
+}
+
+function buildMarkdownFromSlice(slice){
+  const lines = [];
+  lines.push("# Shared Money Export");
+  lines.push("");
+  lines.push("- **Period:** " + slice.periodLabel);
+  lines.push("- **Generated:** " + new Date().toLocaleString("en-IN"));
+  lines.push("- **Budget:** " + money(slice.budget));
+  lines.push("- **Opening Balance:** " + money(slice.openingBalance));
+  lines.push("");
+  if(exportState.includeExpenses){
+    lines.push("## Expenses (" + slice.expenses.length + ")");
+    lines.push("");
+    lines.push("| Date | Name | Category | Amount |");
+    lines.push("| --- | --- | --- | ---: |");
+    slice.expenses.forEach(function(item){
+      lines.push("| " + dateText(item.createdAt) + " | " + String(item.name).replace(/\|/g,"/") + " | " + (item.category || "Other") + " | " + money(item.amount) + " |");
+    });
+    lines.push("");
+  }
+  if(exportState.includeIncome){
+    lines.push("## Income (" + slice.incomes.length + ")");
+    lines.push("");
+    lines.push("| Date | Name | Amount |");
+    lines.push("| --- | --- | ---: |");
+    slice.incomes.forEach(function(item){
+      lines.push("| " + dateText(item.createdAt) + " | " + String(item.name).replace(/\|/g,"/") + " | " + money(item.amount) + " |");
+    });
+    lines.push("");
+  }
+  if(exportState.includeDebits){
+    lines.push("## Debits (" + slice.manualDebits.length + ")");
+    lines.push("");
+    lines.push("| Date | Name | Amount |");
+    lines.push("| --- | --- | ---: |");
+    slice.manualDebits.forEach(function(item){
+      lines.push("| " + dateText(item.createdAt) + " | " + String(item.name).replace(/\|/g,"/") + " | " + money(item.amount) + " |");
+    });
+    lines.push("");
+  }
+  return lines.join("\n");
+}
+
+function buildReportPrintHTML(slice){
+  function rows(items, kind){
+    return items.map(function(item){
+      return "<tr><td>" + escapeHTML(dateText(item.createdAt)) + "</td><td>" +
+        escapeHTML(item.name) + "</td><td>" +
+        escapeHTML(kind === "expense" ? (item.category || "Other") : "—") +
+        "</td><td style='text-align:right'>" + money(item.amount) + "</td></tr>";
+    }).join("");
+  }
+  let body = "";
+  if(exportState.includeExpenses){
+    body += "<h2>Expenses (" + slice.expenses.length + ")</h2><table><thead><tr><th>Date</th><th>Name</th><th>Category</th><th>Amount</th></tr></thead><tbody>" +
+      (slice.expenses.length ? rows(slice.expenses, "expense") : "<tr><td colspan='4'>No expenses</td></tr>") + "</tbody></table>";
+  }
+  if(exportState.includeIncome){
+    body += "<h2>Income (" + slice.incomes.length + ")</h2><table><thead><tr><th>Date</th><th>Name</th><th>Category</th><th>Amount</th></tr></thead><tbody>" +
+      (slice.incomes.length ? rows(slice.incomes, "income") : "<tr><td colspan='4'>No income</td></tr>") + "</tbody></table>";
+  }
+  if(exportState.includeDebits){
+    body += "<h2>Debits (" + slice.manualDebits.length + ")</h2><table><thead><tr><th>Date</th><th>Name</th><th>Category</th><th>Amount</th></tr></thead><tbody>" +
+      (slice.manualDebits.length ? rows(slice.manualDebits, "debit") : "<tr><td colspan='4'>No debits</td></tr>") + "</tbody></table>";
+  }
+  return "<!doctype html><html><head><meta charset='utf-8'><title>Shared Money Export</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#181537}h1{margin:0 0 6px}h2{margin:22px 0 10px;font-size:16px}.sub{color:#777;font-size:12px;margin-bottom:18px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border-bottom:1px solid #eee;padding:8px;text-align:left}th{background:#f7f0e7;font-size:10px;text-transform:uppercase;color:#777}</style></head><body><h1>Shared Money — Export</h1><div class='sub'>Period: " +
+    escapeHTML(slice.periodLabel) + " · Generated " + escapeHTML(new Date().toLocaleString("en-IN")) +
+    "<br>Budget " + money(slice.budget) + " · Opening " + money(slice.openingBalance) +
+    "</div>" + body + "</body></html>";
+}
+
+function runExport(){
+  try {
+    saveData();
+    const slice = getExportSlice();
+    const stamp = new Date().toISOString().slice(0,10);
+    const base = "shared-money-" + exportState.period + "-" + stamp;
+
+    if(exportState.format === "csv"){
+      downloadTextFile(base + ".csv", buildExcelCSVFromSlice(slice), "text/csv;charset=utf-8");
+      showToast("CSV exported");
+    }else if(exportState.format === "json"){
+      downloadJSON(base + ".json", {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        app: "Shared Money",
+        period: slice.periodLabel,
+        data: {
+          budget: slice.budget,
+          openingBalance: slice.openingBalance,
+          expenses: slice.expenses,
+          incomes: slice.incomes,
+          manualDebits: slice.manualDebits
+        }
+      });
+      showToast("JSON exported");
+    }else if(exportState.format === "txt"){
+      downloadTextFile(base + ".txt", buildTxtFromSlice(slice), "text/plain;charset=utf-8");
+      showToast("TXT exported");
+    }else if(exportState.format === "md"){
+      downloadTextFile(base + ".md", buildMarkdownFromSlice(slice), "text/markdown;charset=utf-8");
+      showToast("Markdown exported");
+    }else if(exportState.format === "pdf"){
+      const html = buildReportPrintHTML(slice);
+      if(window.AndroidBridge && typeof window.AndroidBridge.printPassbook === "function"){
+        window.AndroidBridge.printPassbook(html);
+      }else{
+        const w = window.open("", "_blank");
+        if(!w){ showToast("Allow pop-ups to export PDF"); return; }
+        w.document.open();
+        w.document.write(html);
+        w.document.close();
+        setTimeout(function(){ w.print(); }, 400);
+      }
+      showToast("PDF ready");
+    }
+  } catch(e) {
+    console.error(e);
+    showToast("Export failed");
+  }
+}
+
+function initExportUI(){
+  const chips = document.querySelectorAll("#export-period-chips .period-chip");
+  chips.forEach(function(btn){
+    btn.onclick = function(){
+      chips.forEach(function(b){ b.classList.remove("active"); });
+      btn.classList.add("active");
+      exportState.period = btn.getAttribute("data-period");
+    };
+  });
+
+  function wireToggle(id, key){
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.onclick = function(){
+      exportState[key] = !exportState[key];
+      if(exportState[key]) el.classList.add("on");
+      else el.classList.remove("on");
+      el.setAttribute("aria-pressed", exportState[key] ? "true" : "false");
+    };
+  }
+  wireToggle("toggle-expenses", "includeExpenses");
+  wireToggle("toggle-income", "includeIncome");
+  wireToggle("toggle-debits", "includeDebits");
+
+  const cards = document.querySelectorAll("#format-grid .format-card");
+  cards.forEach(function(card){
+    card.onclick = function(){
+      cards.forEach(function(c){ c.classList.remove("active"); });
+      card.classList.add("active");
+      exportState.format = card.getAttribute("data-format");
+    };
+  });
+
+  const mainBtn = document.getElementById("export-main-btn");
+  if(mainBtn) mainBtn.onclick = runExport;
+
+  // legacy hidden buttons still point to runExport defaults
+  const legCsv = document.getElementById("export-excel");
+  const legJson = document.getElementById("export-data");
+  if(legCsv) legCsv.onclick = function(){ exportState.format = "csv"; runExport(); };
+  if(legJson) legJson.onclick = function(){ exportState.format = "json"; runExport(); };
+}
+
+initExportUI();
+
+function openImportPicker(){
+  if (window.AndroidBridge && typeof window.AndroidBridge.openBackupPicker === "function") {
+    window.AndroidBridge.openBackupPicker();
+    return;
+  }
+  document.getElementById("import-file").click();
+}
+
+document.getElementById("import-data").onclick = openImportPicker;
+document.getElementById("import-excel").onclick = openImportPicker;
+
+window.importBackupJSON = function(jsonText){
+  try {
+    // Auto-detect JSON vs CSV
+    const trimmed = (jsonText || "").trim();
+    if(trimmed.charAt(0) === "{" || trimmed.charAt(0) === "["){
+      const parsed = JSON.parse(jsonText);
+      applyImportedBackup(parsed);
+    } else {
+      applyImportedBackup(parseExcelCSV(jsonText));
+    }
+  } catch(e) {
+    console.error(e);
+    showToast("Invalid file. Use Export Excel / Export JSON format.");
+  }
+};
+
+function applyImportedBackup(parsed){
+  // Accept either { data: {...} } wrapper or raw data object (JSON or CSV-parsed)
+  const incoming = parsed && parsed.data && typeof parsed.data === "object"
+    ? parsed.data
+    : parsed;
+
+  if(!incoming || typeof incoming !== "object" || Array.isArray(incoming)){
+    throw new Error("Invalid backup format");
+  }
+
+  const recognized = ["expenses", "incomes", "manualDebits", "budget", "openingBalance", "monthlyBudgets"];
+  if(!recognized.some(function(key){ return Object.prototype.hasOwnProperty.call(incoming, key); })){
+    throw new Error("Unrecognized backup format");
+  }
+
+  const monthlyBudgets =
+    incoming.monthlyBudgets && typeof incoming.monthlyBudgets === "object"
+      ? incoming.monthlyBudgets
+      : {};
+  if(Object.keys(monthlyBudgets).length === 0 && incoming.budget != null){
+    monthlyBudgets[currentMonthKey()] = Number(incoming.budget) || DEFAULT_DATA.budget;
+  }
+
+  data = {
+    ...DEFAULT_DATA,
+    ...incoming,
+    expenses: Array.isArray(incoming.expenses) ? incoming.expenses : [],
+    incomes: Array.isArray(incoming.incomes) ? incoming.incomes : [],
+    manualDebits: Array.isArray(incoming.manualDebits) ? incoming.manualDebits : [],
+    budget: Number(incoming.budget) || DEFAULT_DATA.budget,
+    monthlyBudgets: monthlyBudgets,
+    openingBalance: Number(incoming.openingBalance) || DEFAULT_DATA.openingBalance
+  };
+
+  budgetInput.value = getCurrentBudget();
+  openingInput.value = data.openingBalance;
+  saveData();
+  render();
+  showToast("Data imported successfully");
+}
+
+document.getElementById("import-file").addEventListener("change", function(event){
+  const file = event.target.files && event.target.files[0];
+  event.target.value = "";
+  if(!file) return;
+
+  if(!confirm("Import will replace all current data. Continue?")){
+    return;
+  }
+
+  const name = (file.name || "").toLowerCase();
+  const reader = new FileReader();
+  reader.onload = function(){
+    try {
+      const text = reader.result;
+      if(name.endsWith(".csv") || name.endsWith(".txt") || (typeof text === "string" && text.trim().charAt(0) !== "{")){
+        applyImportedBackup(parseExcelCSV(text));
+      } else {
+        applyImportedBackup(JSON.parse(text));
+      }
+    } catch(e) {
+      console.error(e);
+      showToast("Invalid file. Export Excel se bana file use karein.");
+    }
+  };
+  reader.onerror = function(){
+    showToast("Could not read file");
+  };
+  reader.readAsText(file);
+});
+
+
+/* ======================================================
+   PASSBOOK PDF EXPORT
+====================================================== */
+
+function buildPassbookPrintHTML(){
+
+  const transactions = getFilteredTransactions();
+  const periodOpening =
+    passbookFilter.from != null
+      ? getOpeningBalanceAt(passbookFilter.from)
+      : (Number(data.openingBalance) || 0);
+
+  let running = periodOpening;
+  let totalCredit = 0;
+  let totalDebit = 0;
+
+  const openingLabel =
+    passbookFilter.from != null
+      ? "Opening Balance (period start)"
+      : "Opening Balance";
+
+  let rows = `
+    <tr class="opening">
+      <td>—</td>
+      <td>${openingLabel}</td>
+      <td>—</td>
+      <td>—</td>
+      <td>${money(periodOpening)}</td>
+    </tr>`;
+
+  transactions.forEach(function(item){
+    if(item.type === "credit"){
+      totalCredit += item.amount;
+      running += item.amount;
+    }else{
+      totalDebit += item.amount;
+      running -= item.amount;
+    }
+
+    const date = new Date(item.createdAt).toLocaleDateString("en-IN", {
+      day:"2-digit", month:"short", year:"numeric"
+    });
+
+    rows += `
+      <tr>
+        <td>${escapeHTML(date)}</td>
+        <td>${escapeHTML(item.name)}</td>
+        <td class="debit">${item.type === "debit" ? money(item.amount) : "—"}</td>
+        <td class="credit">${item.type === "credit" ? money(item.amount) : "—"}</td>
+        <td><strong>${money(running)}</strong></td>
+      </tr>`;
+  });
+
+  const periodText = passbookFilter.label || "All time";
+  const closingBalance = running;
+
+  return `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shared Money - Passbook</title>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:Arial,sans-serif;color:#181537;margin:0;padding:28px;background:#fff}
+  h1{margin:0;font-size:28px}
+  .sub{color:#77728a;margin-top:6px;font-size:12px}
+  .top{display:flex;justify-content:space-between;gap:20px;border-bottom:2px solid #7855e8;padding-bottom:16px;margin-bottom:20px}
+  .badge{background:#f1ebff;color:#7855e8;border-radius:20px;padding:8px 12px;font-size:11px;font-weight:bold;height:max-content}
+  .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+  .box{border:1px solid #e9e1d7;border-radius:12px;padding:12px}
+  .label{font-size:8px;text-transform:uppercase;color:#99939f;letter-spacing:.08em}
+  .value{font-size:16px;font-weight:bold;margin-top:5px}
+  .green{color:#45b99a}.red{color:#e96d72}.purple{color:#7855e8}
+  table{width:100%;border-collapse:collapse;font-size:10px}
+  th{text-align:left;background:#f7f0e7;color:#77728a;padding:10px;text-transform:uppercase;font-size:8px}
+  td{padding:10px;border-bottom:1px solid #eee7df}
+  td:nth-child(3),td:nth-child(4),td:nth-child(5),th:nth-child(3),th:nth-child(4),th:nth-child(5){text-align:right}
+  .debit{color:#e96d72}.credit{color:#45b99a}.opening{color:#77728a;font-style:italic}
+  .footer{margin-top:22px;text-align:center;color:#99939f;font-size:9px}
+  @media print{body{padding:10mm}.footer{display:block}}
+</style>
+</head>
+<body>
+  <div class="top">
+    <div>
+      <h1>Shared Money — Passbook</h1>
+      <div class="sub">Period: ${escapeHTML(periodText)}</div>
+    </div>
+    <div class="badge">ADMIN</div>
+  </div>
+
+  <div class="summary">
+    <div class="box"><div class="label">Opening Balance</div><div class="value purple">${money(periodOpening)}</div></div>
+    <div class="box"><div class="label">Total Credit</div><div class="value green">${money(totalCredit)}</div></div>
+    <div class="box"><div class="label">Total Debit</div><div class="value red">${money(totalDebit)}</div></div>
+    <div class="box"><div class="label">Closing Balance</div><div class="value purple">${money(closingBalance)}</div></div>
+  </div>
+
+  <table>
+    <thead><tr><th>Date</th><th>Description</th><th>Debit</th><th>Credit</th><th>Balance</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+
+  <div class="footer">Generated from Shared Money · Designed by Bhim Mondal · ${new Date().toLocaleString("en-IN")}</div>
+</body>
+</html>`;
+}
+
+function savePassbookPDF(){
+  saveData();
+
+  const html = buildPassbookPrintHTML();
+
+  if(window.AndroidBridge && typeof window.AndroidBridge.printPassbook === "function"){
+    window.AndroidBridge.printPassbook(html);
+    return;
+  }
+
+  // Browser fallback: use the browser's Print / Save as PDF dialog.
+  const printWindow = window.open("", "_blank");
+  if(!printWindow){
+    showToast("Allow pop-ups to save the PDF");
+    return;
+  }
+  printWindow.document.open();
+  printWindow.document.write(html);
+  printWindow.document.close();
+  setTimeout(function(){ printWindow.print(); }, 500);
+}
+
+const savePassbookButton = document.getElementById("save-passbook-pdf");
+if(savePassbookButton){
+  savePassbookButton.addEventListener("click", savePassbookPDF);
+}
+
+/* ======================================================
+   START APP
+====================================================== */
+
+
+</script>
+
+<script>
+/* ======================================================
+   ADMIN LOGIN GATE
+   Demo/local-app credentials requested by the owner.
+====================================================== */
+(function(){
+  const ADMIN_USERNAME = "Admin";
+  const ADMIN_PASSWORD = "Neelam143";
+
+  const loginScreen = document.getElementById("login-screen");
+  const app = document.getElementById("app");
+  const form = document.getElementById("login-form");
+  const username = document.getElementById("login-username");
+  const password = document.getElementById("login-password");
+  const error = document.getElementById("login-error");
+
+  function showApp(){
+    loginScreen.style.display = "none";
+    app.style.display = "block";
+    try { username.value = ""; password.value = ""; } catch(e){}
+  }
+
+  password.addEventListener("keydown", function(event){
+    if(event.key === "Enter") form.requestSubmit();
+  });
+
+  // Only render the main application after successful login.
+  // This also prevents a startup/render error from blocking the login form.
+  function launchApp(){
+    showApp();
+    try {
+      if(typeof setDefaultEntryDates === "function") setDefaultEntryDates();
+      if(typeof initPassbookFilterUI === "function") initPassbookFilterUI();
+      if(typeof render === "function") render();
+    } catch(e) {
+      console.error("App render error:", e);
+    }
+  }
+
+  // Replace the success action with the safe launcher.
+  form.addEventListener("submit", function(event){
+    event.preventDefault();
+    const u = username.value.trim();
+    const p = password.value;
+    if(u === ADMIN_USERNAME && p === ADMIN_PASSWORD){
+      error.textContent = "";
+      launchApp();
+      if(typeof showToast === "function") showToast("Welcome, Neelam");
+    } else {
+      error.textContent = "Invalid username or password.";
+      password.value = "";
+      password.focus();
+    }
+  });
+})();
+
+</script>
+
+</body>
+</html>
